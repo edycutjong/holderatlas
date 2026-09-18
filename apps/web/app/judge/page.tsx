@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "The claim, the 30-second path, the receipts, the real reproduce command, and the honest limitations.",
 };
 
-const TEST_COUNT = 157;
+const TEST_COUNT = 158;
 const CLEAN_CLONE_S = "54";
 
 export default function Judge() {

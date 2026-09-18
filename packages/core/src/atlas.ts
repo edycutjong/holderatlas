@@ -325,6 +325,10 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     (x.ok ? x.data.data : []).map((r) => (r.address ? (r.address.startsWith("0x") ? lc(r.address) : r.address) : "")).filter(Boolean),
   );
   const parts = partition(h.data.data, exchangeSet);
+  // an address that is not a token (an EOA, a random contract) comes back 200 with zero holders — live 2026-09-19 that
+  // rendered as "0 of 0 holders analysed · 0.0 %", a map of nothing dressed as an answer. It is the no-token state.
+  if (parts.length === 0)
+    throw new AtlasError("no-token", `Nansen has no holders for ${token.symbol} on ${chain} — not a token contract on this chain?`, candidates);
   const totalSupply = parts.reduce((n, p) => n + p.supply, 0);
   const custodyRows = parts.filter((p) => p.kind === "custody").slice(0, opts.custody ?? DEFAULT_CUSTODY);
   const humanRows = parts.filter((p) => p.kind === "human").slice(0, opts.holders ?? DEFAULT_HOLDERS);

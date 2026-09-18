@@ -405,3 +405,16 @@ describe("live QA pass 1 (2026-09-18): a burn address with --chain", () => {
     expect(err.message).toMatch(/Burn address not allowed/);
   });
 });
+
+describe("live QA (audit 2026-09-19): an address that is not a token", () => {
+  it("holders 200 with zero rows is the no-token state, not a 0 % map of nothing", async () => {
+    const EOA = "0xd8da6bf26964af9d7eed9e03e62f31d0d9a0ee8f";
+    const c = fakeClient((endpoint, body) => {
+      if (endpoint === "search/general") return searchTokens([]);
+      if (endpoint === "tgm/holders") return holders([]);
+      throw new Error("unexpected " + endpoint + " " + JSON.stringify(body));
+    });
+    await expect(atlas(c, EOA, { chain: "ethereum", now: NOW })).rejects.toMatchObject({ code: "no-token", message: expect.stringMatching(/no holders/) });
+    expect(c.creditsSpent).toBe(10); // the two holders calls are the only way to know; nothing more is spent
+  });
+});
