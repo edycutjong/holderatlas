@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { atlasFor, SAFE_QUERY, parseChain } from "@/lib/engine";
-import { clientIp, ipAllowed, budgetExhausted, recordSpend, replayFixture, NO_FIXTURE_MESSAGE } from "@/lib/guard";
+import { clientIp, ipAllowed, ipRelease, budgetExhausted, recordSpend, replayFixture, NO_FIXTURE_MESSAGE } from "@/lib/guard";
 import { AtlasError, DEFAULT_HOLDERS, type AtlasEvent } from "@holderatlas/core";
 
 export const runtime = "nodejs";
@@ -23,7 +23,8 @@ export async function GET(req: NextRequest) {
   const holders = Number.isInteger(holdersParam) && holdersParam >= 1 && holdersParam <= 60 ? holdersParam : DEFAULT_HOLDERS;
   if (!SAFE_QUERY.test(q)) return Response.json({ error: "type a ticker (1–24 letters or digits) or a token address" }, { status: 400 });
   if (!process.env.NANSEN_API_KEY) return Response.json({ error: "server has no NANSEN_API_KEY" }, { status: 500 });
-  const gate = ipAllowed(clientIp(req.headers));
+  const ip = clientIp(req.headers);
+  const gate = ipAllowed(ip);
   if (!gate.ok) {
     return Response.json(
       { error: `Too many maps from this address — try again in ${gate.retryAfter} s` },
@@ -31,16 +32,26 @@ export async function GET(req: NextRequest) {
     );
   }
   const degraded = budgetExhausted();
+  // a request that spent nothing (cache hit, fixture replay, typo) gives its per-IP slot back — the limit caps cold maps
+  const settle = (credits: number) => {
+    if (!degraded) recordSpend(credits);
+    if (credits === 0) ipRelease(ip, gate.stamp);
+  };
 
   if (url.searchParams.get("stream") !== "1") {
     try {
       const r = degraded ? await replayFixture(q, chain, { holders }) : await atlasFor(q, { chain, holders });
-      if (!r) return Response.json({ error: NO_FIXTURE_MESSAGE }, { status: 503, headers: { "retry-after": "3600", "cache-control": "no-store" } });
-      if (!degraded) recordSpend(r.atlas.credits);
+      if (!r) {
+        ipRelease(ip, gate.stamp);
+        return Response.json({ error: NO_FIXTURE_MESSAGE }, { status: 503, headers: { "retry-after": "3600", "cache-control": "no-store" } });
+      }
+      settle(r.atlas.credits);
       return Response.json({ ...r.atlas, asOf: r.oldestHit ?? r.atlas.asOf, degraded }, { headers: { "cache-control": "no-store" } });
     } catch (e) {
-      if (e instanceof AtlasError)
+      if (e instanceof AtlasError) {
+        ipRelease(ip, gate.stamp);
         return Response.json({ error: e.message, code: e.code, candidates: e.candidates }, { status: 404, headers: { "cache-control": "no-store" } });
+      }
       return Response.json({ error: (e as Error).message }, { status: 502 });
     }
   }
@@ -63,14 +74,18 @@ export async function GET(req: NextRequest) {
       };
       try {
         const r = degraded ? await replayFixture(q, chain, { holders, onProgress: send }) : await atlasFor(q, { chain, holders, onProgress: send });
-        if (!r) send({ type: "error", message: NO_FIXTURE_MESSAGE });
-        else {
-          if (!degraded) recordSpend(r.atlas.credits);
+        if (!r) {
+          ipRelease(ip, gate.stamp);
+          send({ type: "error", message: NO_FIXTURE_MESSAGE });
+        } else {
+          settle(r.atlas.credits);
           send({ type: "asOf", asOf: r.oldestHit ?? null, degraded });
         }
       } catch (e) {
-        if (e instanceof AtlasError) send({ type: "error", message: e.message, code: e.code, candidates: e.candidates });
-        else send({ type: "error", message: (e as Error).message });
+        if (e instanceof AtlasError) {
+          ipRelease(ip, gate.stamp);
+          send({ type: "error", message: e.message, code: e.code, candidates: e.candidates });
+        } else send({ type: "error", message: (e as Error).message });
       } finally {
         if (!closed) {
           closed = true;

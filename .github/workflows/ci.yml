@@ -108,7 +108,7 @@ jobs:
       - run: npm run build
       - name: Start and probe every route without a key
         run: |
-          (npm run start -- -p 3100 > server.log 2>&1 &)
+          (npm run start -w apps/web -- -p 3100 > server.log 2>&1 &)
           for i in $(seq 1 30); do curl -sf http://localhost:3100/ > /dev/null && break; sleep 1; done
           set -e
           for p in / /judge /t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933 "/api/og?q=PEPE&chain=ethereum"; do

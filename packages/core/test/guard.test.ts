@@ -10,6 +10,7 @@ import { readFileSync } from "node:fs";
 import { GET as atlasRoute } from "@/app/api/atlas/route";
 import {
   ipAllowed,
+  ipRelease,
   creditsLeft,
   recordSpend,
   budgetExhausted,
@@ -38,12 +39,12 @@ describe("guard counters", () => {
 
   it(`an address gets ${IP_PER_MIN} atlases a minute, then a Retry-After, then the window slides`, () => {
     const t0 = 1_000_000;
-    for (let i = 0; i < IP_PER_MIN; i++) expect(ipAllowed("a", t0 + i)).toEqual({ ok: true });
+    for (let i = 0; i < IP_PER_MIN; i++) expect(ipAllowed("a", t0 + i)).toEqual({ ok: true, stamp: t0 + i });
     const blocked = ipAllowed("a", t0 + 10_000);
     expect(blocked.ok).toBe(false);
     if (!blocked.ok) expect(blocked.retryAfter).toBe(50);
-    expect(ipAllowed("b", t0 + 10_000)).toEqual({ ok: true });
-    expect(ipAllowed("a", t0 + 60_001)).toEqual({ ok: true });
+    expect(ipAllowed("b", t0 + 10_000)).toEqual({ ok: true, stamp: t0 + 10_000 });
+    expect(ipAllowed("a", t0 + 60_001)).toEqual({ ok: true, stamp: t0 + 60_001 });
   });
 
   it("the table is bounded: 5,000 distinct addresses clear it rather than growing forever", () => {
@@ -128,6 +129,37 @@ describe("route behaviour under the guard", () => {
     expect(body.attributable).toBeGreaterThan(0.3);
     expect(body.countries[0].code).toBe("US");
     expect(body.warnings).toContain(BUDGET_MESSAGE);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("audit 2026-09-19: a request that spent 0 credits gives its per-IP slot back — the judge's path (4 cached maps + the JSON link in a minute) is not a 429", async () => {
+    const t0 = 5_000_000;
+    for (let i = 0; i < IP_PER_MIN; i++) {
+      const g = ipAllowed("judge", t0 + i);
+      expect(g.ok).toBe(true);
+      if (g.ok) ipRelease("judge", g.stamp); // each one was warm
+    }
+    expect(ipAllowed("judge", t0 + 100).ok).toBe(true);
+    // releasing an unknown stamp is a no-op; a cold map keeps its slot
+    ipRelease("judge", 42);
+    for (let i = 0; i < IP_PER_MIN - 1; i++) expect(ipAllowed("judge", t0 + 200 + i).ok).toBe(true);
+    expect(ipAllowed("judge", t0 + 300).ok).toBe(false);
+  });
+
+  it("audit 2026-09-19: over the wire — five fixture replays from one address inside a minute all answer 200 (0 credits each), a typo does not burn a slot", async () => {
+    recordSpend(DAILY_CREDITS);
+    for (const [q, extra] of [
+      ["PEPE", "&chain=ethereum"],
+      ["WLFI", "&chain=ethereum"],
+      ["DEGEN", "&chain=base"],
+      ["MEW", "&chain=solana"],
+      ["PEPE", "&chain=ethereum"],
+    ]) {
+      const res = await atlasRoute(req(q, extra, "198.51.100.9"));
+      expect(res.status).toBe(200);
+    }
+    for (let i = 0; i < 3; i++) expect((await atlasRoute(req("XQZPLM", "", "198.51.100.9"))).status).toBe(404);
+    expect((await atlasRoute(req("PEPE", "&chain=ethereum", "198.51.100.9"))).status).toBe(200);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 

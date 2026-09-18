@@ -26,7 +26,7 @@ export function clientIp(headers: Headers): string {
   return headers.get("x-forwarded-for")?.split(",")[0].trim() || headers.get("x-real-ip")?.trim() || "unknown";
 }
 
-export function ipAllowed(ip: string, now = Date.now()): { ok: true } | { ok: false; retryAfter: number } {
+export function ipAllowed(ip: string, now = Date.now()): { ok: true; stamp: number } | { ok: false; retryAfter: number } {
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
   if (recent.length >= IP_PER_MIN) {
     hits.set(ip, recent);
@@ -35,7 +35,21 @@ export function ipAllowed(ip: string, now = Date.now()): { ok: true } | { ok: fa
   recent.push(now);
   if (hits.size >= 5000) hits.clear(); // bound memory under a distributed scan; a cleared window only errs toward allowing
   hits.set(ip, recent);
-  return { ok: true };
+  return { ok: true, stamp: now };
+}
+
+/**
+ * Give the slot back when the request spent nothing: a warm cache hit, a fixture replay, a typo (search is 0 credits).
+ * The per-IP limit exists to cap COLD maps (~120 credits each); the judge's own 30-second path is four cached maps plus
+ * the JSON link inside one minute, which a spend-blind counter answered with a 429 (audit 2026-09-19).
+ */
+export function ipRelease(ip: string, stamp: number): void {
+  const recent = hits.get(ip);
+  if (!recent) return;
+  const i = recent.indexOf(stamp);
+  if (i >= 0) recent.splice(i, 1);
+  if (recent.length) hits.set(ip, recent);
+  else hits.delete(ip);
 }
 
 let day = "";
