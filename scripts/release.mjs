@@ -47,7 +47,7 @@ else pa += 1;
 const next = `v${ma}.${mi}.${pa}`;
 process.stdout.write(`Bump: ${bump}  ${last || "none"} -> ${next}\n`);
 if (dry) {
-  process.stdout.write(git("log", "--format=  %h %s", range) + "\n(dry run — nothing changed)\n");
+  process.stdout.write(git("log", "--format=%h %s", range).replace(/^/gm, "  ") + "\n(dry run — nothing changed)\n");
   process.exit(0);
 }
 
