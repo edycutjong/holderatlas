@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 const TEST_COUNT = 142;
-const CLEAN_CLONE_S = "—";
+const CLEAN_CLONE_S = "54";
 
 export default function Judge() {
   return (
@@ -104,7 +104,9 @@ export default function Judge() {
             </tr>
             <tr>
               <th>Clean clone → first map</th>
-              <td>{CLEAN_CLONE_S} s of machine time from a fresh clone (measured, see README)</td>
+              <td>
+                {CLEAN_CLONE_S} s of machine time (clone 1 s · install 5 s · first live map 34 s · verify 1 s · build 10 s · tests 3 s), 2026-09-18 11:11 UTC
+              </td>
             </tr>
           </tbody>
         </table>

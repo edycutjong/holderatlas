@@ -125,7 +125,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 | Cold latency | p50 **40.3 s** · p95 **59.0 s** (4 tokens, live, 4-wide pool under 5 rps) | [docs/BENCH.md](docs/BENCH.md) |
 | Warm latency | p50 **7 ms** | [docs/BENCH.md](docs/BENCH.md) |
 | Credits per map | mean **118**, max 121 | [docs/BENCH.md](docs/BENCH.md) |
-| Clean clone → first map | **measured below** | see Getting Started |
+| Clean clone → first map | **54 s** (clone 1 · install 5 · first live map 34 · verify 1 · build 10 · tests 3) | see Getting Started |
 
 ### Honesty
 
@@ -167,7 +167,7 @@ npm run verify                                             # replays 12 recorded
 npm run dev                                                # http://localhost:3000 — the picture
 ```
 
-Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-18): see the timing line in JUDGE.md — filled in after the first push.
+Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-18 11:11 UTC): clone 1 s · install 5 s · first live map (WLFI, 120 credits) 34 s · `verify` 1 s · `next build` 10 s · tests 3 s — **54 s of machine time** plus pasting the API key.
 
 ## 🧪 Testing & CI
 

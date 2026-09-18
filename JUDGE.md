@@ -28,7 +28,7 @@ one number that keeps the picture honest — as large as the map. Global exchang
 | Nansen endpoints | `search/general` · `tgm/holders` (all + `label_type: exchange`) · `tgm/transfers` (CEX-only, per wallet) · `transaction-with-token-transfer-lookup` · `profiler/address/related-wallets` — every placement is one of their response fields joined to [exchanges.json](packages/core/src/exchanges.json) (133 rows, one source each) |
 | Tests | **142 tests** (vitest): every label string seen live pinned to its key; the arithmetic property-tested (24,000 cases); offline replay = same hash; the USDC timeout path; the route boundary (10,000 generated garbage queries → 400, zero fetches); the key never reaches a client |
 | Determinism | 12 recorded atlases replay offline with the same hash, zero network, zero credits — including a recorded timeout, replayed as a timeout |
-| Clean clone → first map | measured after the first push (see README) |
+| Clean clone → first map | **54 s** of machine time (clone 1 s · install 5 s · first live map 34 s · verify 1 s · build 10 s · tests 3 s), 2026-09-18 11:11 UTC |
 
 ## Reproduce
 The real path — live Nansen calls, ~120 credits:
