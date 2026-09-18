@@ -172,7 +172,7 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 
 ## 🧪 Testing & CI
 
-**5-stage pipeline:** Quality (Prettier · ESLint · tsc · vitest + coverage · offline replay · readiness) → Security (TruffleHog, npm audit; CodeQL and gitleaks in their own workflows) → Build → E2E smoke of every route without a key → Deploy gate. No API key anywhere in CI.
+**6-stage pipeline:** Quality (Prettier · ESLint · tsc · vitest + coverage · offline replay · readiness) → Security (TruffleHog, npm audit; CodeQL and gitleaks in their own workflows) → Build → E2E smoke of every route without a key → Deploy gate → **Production deploy** (main only: `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod`, then the stable alias is re-pointed). No API key anywhere in CI; the only secret is `VERCEL_TOKEN`. CD runs on every push to `main` once GitHub Actions is enabled for this account (it is billing-blocked at the time of writing — deploys are made locally with the same three commands until then).
 
 **Releases:** semantic versions from Conventional Commits — `feat:` → minor, `fix:`/`perf:` → patch, `!`/`BREAKING CHANGE` → major, anything else → no release. `release.yml` runs the algorithm after a green pipeline on `main`; `npm run release` (`--dry-run` to preview) runs the same algorithm locally when Actions cannot: bumps every `package.json` + lockfile, commits `chore(release): vX.Y.Z [skip ci]`, tags, pushes and publishes the [GitHub Release](https://github.com/edycutjong/holderatlas/releases/latest). The footer of every page reads the version from `package.json`, so the deployed site always names its release.
 
