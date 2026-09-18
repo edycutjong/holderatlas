@@ -1,0 +1,60 @@
+{
+  "edge": "11 · no such token — 0 credits, the no-token state",
+  "input": "XQZPLM",
+  "options": {},
+  "now": 1789727464136,
+  "recordedAt": "2026-09-18T10:31:04.136Z",
+  "live": {
+    "calls": 1,
+    "credits": 0,
+    "ms": 439
+  },
+  "responses": {
+    "e10becc5d4e7fef0c0234492c4c30c9f": {
+      "storedAt": "2026-09-18T10:31:04.574Z",
+      "ttlMs": 1800000,
+      "endpoint": "search/general",
+      "body": {
+        "search_query": "XQZPLM",
+        "result_type": "token",
+        "limit": 25
+      },
+      "text": "{\"tokens\":[],\"entities\":[],\"total_results\":0}"
+    }
+  },
+  "atlas": {
+    "input": "XQZPLM",
+    "error": {
+      "code": "no-token",
+      "message": "no token named \"XQZPLM\" on a supported chain"
+    },
+    "calls": [
+      {
+        "endpoint": "search/general",
+        "body": {
+          "search_query": "XQZPLM",
+          "result_type": "token",
+          "limit": 25
+        },
+        "credits": 0,
+        "ms": 437,
+        "cached": false,
+        "status": 200,
+        "fieldsUsed": [
+          "tokens[].symbol",
+          "tokens[].chain",
+          "tokens[].address",
+          "tokens[].rank",
+          "tokens[].market_cap"
+        ],
+        "responseHash": "7b618709926104ef1e68ea865edbf638e1e0ab6511ad44e6943ad98f4a73c1ec",
+        "attempts": 1,
+        "totalMs": 437,
+        "ok": true
+      }
+    ],
+    "credits": 0,
+    "ms": 439,
+    "hash": "error:no-token"
+  }
+}

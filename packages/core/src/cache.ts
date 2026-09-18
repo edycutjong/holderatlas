@@ -2,7 +2,15 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { NansenClient, sha256, CREDITS, type ClientOptions, type CallOptions } from "./client.js";
 
-export type CacheEntry = { storedAt: string; ttlMs: number; endpoint: string; body: Record<string, unknown>; text: string };
+export type CacheEntry = {
+  storedAt: string;
+  ttlMs: number;
+  endpoint: string;
+  body: Record<string, unknown>;
+  text: string;
+  /** set when the live call timed out: a fixture records the timeout so an offline replay reproduces the same failure */
+  failed?: "timeout";
+};
 
 /** Storage for cached responses. Disk for CLI/dev; the web app can plug in KV with the same three methods. */
 export interface CacheStore {
@@ -95,7 +103,13 @@ export class CachedNansenClient extends NansenClient {
     // really bypasses reads. Offline mode serves any entry regardless of age (it is a replay, and says so).
     const hit = this.ttlMs > 0 || this.offline ? this.store.get(key) : undefined;
     const fresh = hit && Date.now() - Date.parse(hit.storedAt) < this.ttlMs;
-    if (hit && (fresh || this.offline)) {
+    if (hit?.failed && this.offline) {
+      // the live run recorded a timeout here — replay it as one (never as data), so the atlas comes out identical
+      const e = Object.assign(new Error("replayed timeout"), { name: "AbortError" });
+      this.calls.push({ endpoint, body, credits: 0, ms: 0, cached: true, status: 0, fieldsUsed, responseHash: "", attempts: 0, totalMs: 0, ok: false, error: "timeout (replayed)" });
+      throw e;
+    }
+    if (hit && !hit.failed && (fresh || this.offline)) {
       this.calls.push({
         endpoint,
         body,
@@ -119,6 +133,7 @@ export class CachedNansenClient extends NansenClient {
       raw = await this.postRaw(endpoint, body, opts);
     } catch (e) {
       this.recordFailure(endpoint, body, fieldsUsed, e, Date.now() - t0);
+      if (e instanceof Error && e.name === "AbortError") this.store.set(key, { storedAt: new Date().toISOString(), ttlMs: this.ttlMs, endpoint, body, text: "", failed: "timeout" });
       throw e;
     }
     const { text, ms, status, attempts, totalMs } = raw;

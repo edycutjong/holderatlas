@@ -16,7 +16,7 @@ export type Fixture = {
   /** the `now` the live run used for the 1-year window, so a replay later computes the same window and cache keys */
   now: number;
   recordedAt: string;
-  live: { calls: number; credits: number; ms: number };
+  live: { calls: number; credits: number; ms: number; source?: string };
   responses: Record<string, CacheEntry>;
   atlas: Atlas;
 };

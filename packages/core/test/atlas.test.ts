@@ -151,8 +151,9 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(a.structuralShare).toBeCloseTo(1450 / 2210, 6);
     expect(a.hash).toHaveLength(12);
     expect(a.credits).toBe(c.creditsSpent);
-    // credits: holders 5+5 · custody 2×2 · humans 3×2 + 1×3 (deposit path) + 1×2 (two empty transfers) · contract 2 empty transfers + 1 related-wallets = 28
-    expect(a.credits).toBe(28);
+    // credits: holders 5+5 · window probe 1 (a cache hit at 0 in the cached client) · custody 2×2 · humans 3×2 + 1×3 (deposit path)
+    // + 1×2 (two empty transfers) · contract 2 empty transfers + 1 related-wallets = 29
+    expect(a.credits).toBe(29);
     expect(events.filter((e) => e.type === "wallet")).toHaveLength(8); // 2 custody + 6 "humans" incl. the contract before its reclass
     expect(events.at(-1)?.type).toBe("atlas");
     expect(a.warnings).toEqual([]);
@@ -235,35 +236,62 @@ describe("atlas() end to end on the PEPE model", () => {
   });
 });
 
-describe("timeout strikes (USDC, live 2026-09-18: the per-wallet transfer filter times out on the highest-volume token)", () => {
-  it("3 timeouts shrink the window to 30 days; 6 make the rest fail fast without a call; the warning names it", async () => {
+describe("timeout probes (USDC, live 2026-09-18: the per-wallet transfer filter times out on the highest-volume token)", () => {
+  async function run(behaviour: (days: number) => "ok" | "timeout") {
     let transfersCalls = 0;
-    const windows: string[] = [];
-    const routes = (e: string, b: Record<string, unknown>) => {
-      if (e === "tgm/transfers") {
-        transfersCalls++;
-        windows.push((b.date as { from: string }).from);
-        return new Promise<never>(() => {}); // never resolves → client timeout
-      }
-      return pepeRoutes(e, b);
-    };
+    const windows: number[] = [];
     const fetchImpl: typeof fetch = async (url, init) => {
       const endpoint = String(url).replace("https://api.nansen.ai/api/v1/", "");
       const body = JSON.parse(String(init?.body ?? "{}"));
-      const out = routes(endpoint, body);
-      if (out instanceof Promise) return new Promise((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
-      return new Response(JSON.stringify(out), { status: 200 });
+      if (endpoint === "tgm/transfers") {
+        transfersCalls++;
+        const d = body.date as { from: string; to: string };
+        const days = Math.round((Date.parse(d.to) - Date.parse(d.from)) / 86_400_000) - 1;
+        windows.push(days);
+        if (behaviour(days) === "timeout") return new Promise((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+      }
+      return new Response(JSON.stringify(pepeRoutes(endpoint, body)), { status: 200 });
     };
     const { NansenClient } = await import("../src/client.js");
     const c = new NansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, rps: 1000, timeoutMs: 20 });
     const a = await atlas(c, "PEPE", { now: NOW, concurrency: 1 });
-    // 8 examined wallets: strikes 1-3 on the 1-year window, 4-6 on the 30-day window, then 7-8 skipped
-    expect(transfersCalls).toBe(6);
-    expect(new Set(windows.slice(0, 3)).size).toBe(1);
-    expect(windows[3]).not.toBe(windows[0]);
+    return { a, transfersCalls, windows };
+  }
+  it("1-year probe times out → everyone uses the 30-day window; the warning says so", async () => {
+    const { a, windows } = await run((days) => (days > 30 ? "timeout" : "ok"));
+    expect(windows[0]).toBe(365);
+    expect(new Set(windows.slice(1))).toEqual(new Set([30]));
+    expect(a.warnings.join()).toMatch(/window is 30 days/);
+    expect(a.attributable).toBeGreaterThan(0); // the model answers on any window
+  });
+  it("both probes time out → every wallet is skipped without a call, marked, never guessed", async () => {
+    const { a, transfersCalls } = await run(() => "timeout");
+    expect(transfersCalls).toBe(2);
+    expect(a.rows.filter((r) => r.error?.startsWith("skipped:"))).toHaveLength(8);
     expect(a.errors.wallets).toBe(7); // 8 examined minus the contract, which the related-wallets check moves out of the denominator
-    expect(a.rows.filter((r) => r.error?.startsWith("skipped:"))).toHaveLength(2);
-    expect(a.warnings.join()).toMatch(/shortened to 30 days.*skipped/);
+    expect(a.warnings.join()).toMatch(/every wallet was skipped/);
     expect(a.attributable).toBe(0);
+  });
+  it("a recorded timeout replays as a timeout offline (fixture determinism)", async () => {
+    const store = new MemoryCache();
+    let n = 0;
+    const fetchImpl: typeof fetch = async (url, init) => {
+      const endpoint = String(url).replace("https://api.nansen.ai/api/v1/", "");
+      const body = JSON.parse(String(init?.body ?? "{}"));
+      if (endpoint === "tgm/transfers" && (body.filters as Record<string, string>).to_address === addr(2) && n++ === 0)
+        return new Promise((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+      return new Response(JSON.stringify(pepeRoutes(endpoint, body)), { status: 200 });
+    };
+    const live = new CachedNansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, store, rps: 1000, timeoutMs: 20 });
+    const a = await atlas(live, "PEPE", { now: NOW });
+    expect(a.rows.find((r) => r.address === addr(2))?.bucket).toBe("error");
+    const replay = new CachedNansenClient("nsn_test_key_0000000000000000000000", { store, offline: true, rps: 1000 });
+    const b = await atlas(replay, "PEPE", { now: NOW });
+    expect(b.hash).toBe(a.hash);
+    expect(b.rows.find((r) => r.address === addr(2))?.error).toMatch(/timeout/);
+    // online, the marker is ignored and the call is retried for real
+    const again = new CachedNansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, store, rps: 1000, timeoutMs: 20 });
+    const c = await atlas(again, "PEPE", { now: NOW });
+    expect(c.rows.find((r) => r.address === addr(2))?.bucket).toBe("country");
   });
 });

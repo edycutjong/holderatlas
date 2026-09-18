@@ -100,8 +100,7 @@ export const HOLDERS_PAGE = 100;
 /** an untraced "human" row holding at least this share of the analysed supply gets a 1-credit contract check */
 export const CONTRACT_CHECK_MIN_SHARE = 0.02;
 export const CONTRACT_RELATION = /deployed by|created by/i;
-/** after this many transfer-filter timeouts on one token the window shrinks to 30 days; after as many more, the rest fail fast */
-export const TIMEOUT_STRIKES = 3;
+/** when the 1-year per-wallet transfer window times out on the probe wallet, everyone gets this window instead */
 export const SHORT_WINDOW_DAYS = 30;
 export const FAST_FAIL_MESSAGE = "skipped: Nansen's per-wallet transfer filter times out on this token (very high transfer volume)";
 export const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
@@ -275,11 +274,20 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   });
 
   const rows: WalletRow[] = parts.filter((p) => p.kind === "structural").map((p) => ({ ...p, share: 0, entityLabel: null, exchange: null, country: null, bucket: "untraced" as Bucket, via: null, txHash: null, txAt: null, calls: 0, credits: 0 }));
-  // Nansen's per-wallet transfer filter times out (10 s) on the highest-volume tokens (USDC, live 2026-09-18). Strikes are
-  // shared across the pool: 3 timeouts → 30-day window for everyone after; 3 more → the rest are skipped, marked, never guessed.
+  // Nansen's per-wallet transfer filter times out (10 s) on the highest-volume tokens (USDC, live 2026-09-18). Two sequential
+  // probes on the largest examined wallet decide the window for everyone — deterministic, so a fixture replays identically:
+  // 1-year window times out → 30 days; that times out too → every wallet is skipped with a named reason, never guessed.
   let windowDays = 365;
-  let strikes = 0;
   let fastFail = false;
+  const probeWallet = custodyRows[0] ?? humanRows[0];
+  if (probeWallet) {
+    for (const days of [365, SHORT_WINDOW_DAYS]) {
+      const t = await settle(nansen.cexTransfers(client, chain, token.address, probeWallet.address, "to", window(now, days), 5, { timeoutMs: Math.round(client.defaultTimeoutMs * 1.25), retries: 0 }));
+      if (t.ok || t.error !== "timeout") break;
+      windowDays = days === 365 ? SHORT_WINDOW_DAYS : windowDays;
+      if (days === SHORT_WINDOW_DAYS) fastFail = true;
+    }
+  }
   const queue = [...custodyRows, ...humanRows];
   let done = 0;
   const lookup = async (p: (typeof queue)[number]): Promise<void> => {
@@ -295,11 +303,6 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
       const t = await settle(nansen.cexTransfers(client, chain, token.address, p.address, dir, window(now, windowDays), 5, { timeoutMs: Math.round(client.defaultTimeoutMs * 1.25), retries: 0 }));
       if (!t.ok) {
         row.error = `tgm/transfers ${dir}: ${t.error}`;
-        if (t.error === "timeout") {
-          strikes++;
-          if (strikes >= TIMEOUT_STRIKES && windowDays !== SHORT_WINDOW_DAYS) windowDays = SHORT_WINDOW_DAYS;
-          else if (strikes >= 2 * TIMEOUT_STRIKES) fastFail = true;
-        }
         break;
       }
       const newest = t.data.data[0];
@@ -378,7 +381,7 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   if (unknownEntities.length) warnings.push(`entities not in exchanges.json (counted as unattributed): ${unknownEntities.join(", ")}`);
   const failed = rows.filter((r) => r.bucket === "error").length;
   if (failed) warnings.push(`${failed} wallet${failed > 1 ? "s" : ""} could not be looked up (timeouts or errors) — shown as "lookup failed", never guessed`);
-  if (windowDays !== 365) warnings.push(`Nansen's transfer filter timed out repeatedly on ${token.symbol} — the exchange-trace window was shortened to ${windowDays} days after ${TIMEOUT_STRIKES} timeouts${fastFail ? ", then the remaining wallets were skipped" : ""}`);
+  if (windowDays !== 365) warnings.push(`Nansen's per-wallet transfer filter timed out on ${token.symbol} over 1 year — ${fastFail ? "and over 30 days: every wallet was skipped, nothing was guessed" : `the exchange-trace window is 30 days for this token`}`);
   const calls = client.calls.slice(callsBefore);
   const out: Atlas = {
     input: input.trim(),

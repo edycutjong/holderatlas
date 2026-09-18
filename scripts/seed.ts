@@ -6,10 +6,34 @@
  *   set -a; source ~/.config/nansen/meridian.env; set +a; npm run seed        # all fixtures (~1,100 credits)
  *   npm run seed -- PEPE WLFI                                                 # a subset
  */
-import { CachedNansenClient, MemoryCache, atlas, writeFixture, AtlasError, type Fixture, type Atlas } from "../packages/core/src/index.js";
+import { CachedNansenClient, MemoryCache, DiskCache, atlas, writeFixture, AtlasError, type Fixture, type Atlas, type CacheStore, type CacheEntry } from "../packages/core/src/index.js";
 import { FIXTURE_SET } from "./fixture-set.js";
 
-const wanted = process.argv.slice(2).map((q) => q.toUpperCase());
+/**
+ * --reuse-cache: read through today's `.cache/` (the spike's live responses, same UTC day → same 1-year window → same
+ * keys) so a token already fetched today costs 0 credits to record; everything still lands in the fixture byte-for-byte.
+ * The fixture says so in `live.source`. Default: a fresh store per fixture, every response fetched live now.
+ */
+const reuse = process.argv.includes("--reuse-cache");
+class Layered implements CacheStore {
+  constructor(
+    private mem: MemoryCache,
+    private disk: DiskCache,
+  ) {}
+  get(key: string) {
+    const m = this.mem.get(key);
+    if (m) return m;
+    const d = this.disk.get(key);
+    if (d) this.mem.set(key, d);
+    return d;
+  }
+  set(key: string, entry: CacheEntry) {
+    this.mem.set(key, entry);
+    this.disk.set(key, entry);
+  }
+}
+
+const wanted = process.argv.slice(2).filter((a) => !a.startsWith("--")).map((q) => q.toUpperCase());
 const set = wanted.length ? FIXTURE_SET.filter((f) => wanted.includes(f.input.toUpperCase())) : FIXTURE_SET;
 const apiKey = process.env.NANSEN_API_KEY ?? "";
 let totalCredits = 0,
@@ -18,7 +42,7 @@ let totalCredits = 0,
 for (const f of set) {
   // A fresh in-memory store per fixture: every response is fetched live and lands in the file, nothing is shared.
   const store = new MemoryCache();
-  const client = new CachedNansenClient(apiKey, { store });
+  const client = new CachedNansenClient(apiKey, { store: reuse ? new Layered(store, new DiskCache(".cache")) : store });
   const now = Date.now();
   let a: Atlas;
   try {
@@ -36,7 +60,7 @@ for (const f of set) {
     options: { chain: f.chain, holders: f.holders, custody: f.custody },
     now,
     recordedAt: new Date(now).toISOString(),
-    live: { calls: live.length, credits: a.credits, ms: a.ms },
+    live: { calls: live.length, credits: a.credits, ms: a.ms, ...(reuse && a.calls.some((c) => c.cached) ? { source: "responses recorded live earlier today (spike run), read from .cache/" } : {}) },
     responses: store.entries(),
     atlas: a,
   };
