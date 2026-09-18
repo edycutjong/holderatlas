@@ -1,12 +1,13 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Poster, pct, toPoster, barRows, type PosterData } from "./Poster";
+import { Poster, pct, barRows } from "./Poster";
 import { Drawer } from "./Drawer";
 import { Example, HowItDecides } from "./Example";
 import { svgToPngBlob, download } from "@/lib/png";
 import { CHAINS } from "@core/nansen";
 import { countryName } from "@core/labels";
-import type { Atlas as AtlasT, AtlasEvent, Candidate, WalletRow, Call } from "@holderatlas/core";
+import { applyEvent, splitLines, type Live, type StreamEvent } from "@/lib/stream";
+import type { Atlas as AtlasT, Candidate, WalletRow } from "@holderatlas/core";
 
 const EXAMPLES: Array<{ q: string; chain: string }> = [
   { q: "PEPE", chain: "ethereum" },
@@ -18,20 +19,6 @@ const EXAMPLES: Array<{ q: string; chain: string }> = [
 ];
 
 type Phase = "idle" | "streaming" | "done" | "error";
-type Live = {
-  data: PosterData;
-  rows: WalletRow[];
-  calls: Call[];
-  credits: number;
-  ms: number;
-  hash: string;
-  warnings: string[];
-  asOf: string | null;
-  degraded: boolean;
-  candidates: Candidate[];
-};
-
-const emptyBucket = { share: 0, supply: 0, wallets: 0, exchanges: [] as string[] };
 
 export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery?: string; initialChain?: string; example: AtlasT; exampleFile: string }) {
   const [q, setQ] = useState(initialQuery ?? "");
@@ -62,10 +49,6 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
     else url.searchParams.delete("chain");
     window.history.replaceState(null, "", url.toString());
     let cur: Live | null = null;
-    const set = (patch: Partial<Live>) => {
-      cur = { ...(cur ?? blank()), ...patch };
-      setLive(cur);
-    };
     try {
       const res = await fetch(`/api/atlas?q=${encodeURIComponent(t)}${ch !== "auto" ? `&chain=${ch}` : ""}&stream=1`, { signal: ctrl.signal });
       if (!res.ok || !res.body) {
@@ -79,63 +62,24 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
         const { value, done } = await reader.read();
         if (done) break;
         buf += dec.decode(value, { stream: true });
-        let nl: number;
-        while ((nl = buf.indexOf("\n")) >= 0) {
-          const line = buf.slice(0, nl);
-          buf = buf.slice(nl + 1);
-          if (!line.trim()) continue;
-          const e = JSON.parse(line) as
-            AtlasEvent | { type: "error"; message: string; candidates?: Candidate[] } | { type: "asOf"; asOf: string | null; degraded: boolean };
-          if (e.type === "token") {
-            set({ data: { ...blank().data, token: e.token, chain: e.token.chain, naming: e.token.chain !== "solana" }, candidates: e.candidates });
-            setStatus(`${e.token.symbol} on ${e.token.chain} — fetching the top holders…`);
-          } else if (e.type === "holders") {
-            set({
-              data: { ...cur!.data, holdersFetched: e.fetched, examined: e.examined, progress: { done: 0, total: e.examined.custody + e.examined.human } },
-            });
-            setStatus(
-              `${e.fetched} holders: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts — naming ${e.examined.custody + e.examined.human} of them…`,
-            );
-          } else if (e.type === "wallet") {
-            const rows = [...cur!.rows, e.row];
-            set({
-              rows,
-              data: {
-                ...cur!.data,
-                countries: e.partial.countries,
-                global: e.partial.global,
-                untraced: e.partial.untraced,
-                unnamed: e.partial.unnamed,
-                otherEntity: e.partial.otherEntity,
-                errors: e.partial.errors,
-                attributable: e.partial.attributable,
-                attributableByWallets: e.partial.attributableByWallets,
-                progress: { done: e.done, total: e.total },
-              },
-            });
-            setStatus(`${e.done}/${e.total} wallets · ${pct(e.partial.attributable)} placed so far`);
-          } else if (e.type === "reclass") {
-            set({ rows: cur!.rows.map((r) => (r.address === e.row.address ? e.row : r)) });
-          } else if (e.type === "atlas") {
-            const a = e.atlas;
-            set({
-              data: toPoster(a),
-              rows: a.rows,
-              calls: a.calls,
-              credits: a.credits,
-              ms: a.ms,
-              hash: a.hash,
-              warnings: a.warnings,
-              candidates: a.candidates,
-            });
-          } else if (e.type === "asOf") {
-            set({ asOf: e.asOf, degraded: e.degraded });
-          } else if (e.type === "error") {
+        const { lines, rest } = splitLines(buf);
+        buf = rest;
+        for (const line of lines) {
+          const e = JSON.parse(line) as StreamEvent;
+          if (e.type === "error") {
             setError({ message: e.message, candidates: e.candidates });
             setPhase("error");
             setStatus("");
             return;
           }
+          cur = applyEvent(cur, e);
+          setLive(cur);
+          if (e.type === "token") setStatus(`${e.token.symbol} on ${e.token.chain} — fetching the top holders…`);
+          else if (e.type === "holders")
+            setStatus(
+              `${e.fetched} holders: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts — naming ${e.examined.custody + e.examined.human} of them…`,
+            );
+          else if (e.type === "wallet") setStatus(`${e.done}/${e.total} wallets · ${pct(e.partial.attributable)} placed so far`);
         }
       }
       if (!cur || !(cur as Live).hash) {
@@ -403,36 +347,4 @@ function cleanLabel(l: string) {
     .replace(/\[0x[0-9a-f]+\]/gi, "")
     .replace(/[\u200B-\u200F\uFEFF]/g, "")
     .trim();
-}
-
-function blank(): Live {
-  return {
-    data: {
-      token: { symbol: "…", name: "", chain: "ethereum", address: "", marketCap: null },
-      chain: "ethereum",
-      naming: true,
-      countries: [],
-      global: emptyBucket,
-      otherEntity: emptyBucket,
-      untraced: emptyBucket,
-      unnamed: emptyBucket,
-      errors: emptyBucket,
-      attributable: 0,
-      attributableByWallets: 0,
-      custodyShare: 0,
-      structuralShare: 0,
-      examined: { custody: 0, human: 0 },
-      holdersFetched: 0,
-      coverage: 0,
-    },
-    rows: [],
-    calls: [],
-    credits: 0,
-    ms: 0,
-    hash: "",
-    warnings: [],
-    asOf: null,
-    degraded: false,
-    candidates: [],
-  };
 }

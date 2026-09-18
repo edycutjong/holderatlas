@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { NansenClient } from "../src/client.js";
+import { NansenClient, BudgetError } from "../src/client.js";
+import { CachedNansenClient, MemoryCache } from "../src/cache.js";
+import { atlas } from "../src/atlas.js";
+import { pepeRoutes } from "./helpers.js";
 import { fakeClient } from "./helpers.js";
 
 describe("NansenClient", () => {
@@ -90,5 +93,55 @@ describe("per-call options", () => {
     await expect(c.post("tgm/transfers", {}, [], { timeoutMs: 20, retries: 0 })).rejects.toThrow();
     expect(Date.now() - t0).toBeLessThan(1000);
     expect(c.calls[0]).toMatchObject({ ok: false, error: "timeout", attempts: 1 });
+  });
+});
+
+describe("credit ceiling (DEVIATIONS #10, 2026-09-18: `seed --reuse-cache` on a cold cache re-billed 1,050 credits)", () => {
+  it("the call that would cross maxCredits throws BudgetError before any request is sent", async () => {
+    let fetches = 0;
+    const c = fakeClient(
+      () => {
+        fetches++;
+        return { data: [] };
+      },
+      { maxCredits: 6 },
+    );
+    await c.post("tgm/holders", { chain: "ethereum" }); // 5 → 5 spent
+    await c.post("tgm/transfers", { chain: "ethereum" }); // 1 → 6 spent, exactly the ceiling
+    await expect(c.post("tgm/transfers", { chain: "ethereum", n: 2 })).rejects.toBeInstanceOf(BudgetError);
+    expect(fetches).toBe(2);
+    expect(c.creditsSpent).toBe(6);
+    const failed = c.calls.at(-1)!;
+    expect(failed).toMatchObject({ ok: false, credits: 0 });
+    expect(failed.error).toMatch(/credit ceiling/);
+  });
+  it("cached hits are free and never count against the ceiling; the first cold call past it is refused", async () => {
+    let fetches = 0;
+    const store = new MemoryCache();
+    const warm = new CachedNansenClient("nsn_test_key_0000000000000000000000", {
+      store,
+      fetchImpl: async () => {
+        fetches++;
+        return new Response('{"data":[]}', { status: 200 });
+      },
+    });
+    await warm.post("tgm/holders", { chain: "ethereum", token_address: "0x1" });
+    const capped = new CachedNansenClient("nsn_test_key_0000000000000000000000", {
+      store,
+      maxCredits: 1,
+      fetchImpl: async () => {
+        fetches++;
+        return new Response('{"data":[]}', { status: 200 });
+      },
+    });
+    await capped.post("tgm/holders", { chain: "ethereum", token_address: "0x1" }); // a hit: 0 credits, allowed under a ceiling of 1
+    expect(capped.creditsSpent).toBe(0);
+    await expect(capped.post("tgm/holders", { chain: "ethereum", token_address: "0x2" })).rejects.toBeInstanceOf(BudgetError);
+    expect(fetches).toBe(1);
+  });
+  it("atlas() stops at the ceiling instead of finishing with every wallet marked 'lookup failed'", async () => {
+    const c = fakeClient(pepeRoutes, { maxCredits: 12 });
+    await expect(atlas(c, "PEPE", { now: Date.parse("2026-09-18T11:00:00Z") })).rejects.toBeInstanceOf(BudgetError);
+    expect(c.creditsSpent).toBeLessThanOrEqual(12);
   });
 });

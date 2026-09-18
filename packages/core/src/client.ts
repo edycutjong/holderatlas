@@ -29,6 +29,12 @@ export type ClientOptions = {
   rps?: number;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /**
+   * Hard ceiling on credits this client may spend on the network (cached hits are free and do not count). The call that
+   * would cross it throws a BudgetError BEFORE any request is made. Scripts that are meant to be free (`seed --reuse-cache`)
+   * set it so a cold cache aborts at one token's worth instead of silently re-billing the whole set (1,050 credits, 2026-09-18).
+   */
+  maxCredits?: number;
 };
 
 /** Credit cost per endpoint (docs.nansen.ai credits table, 2026-09-15; extended 2026-09-18). Unknown endpoints count as 1. */
@@ -42,6 +48,19 @@ export const CREDITS: Record<string, number> = {
   "tgm/holders": 5,
   "profiler/address/counterparties": 5,
 };
+
+/** Thrown before a network call that would push `creditsSpent` past `maxCredits`. Nothing was sent. */
+export class BudgetError extends Error {
+  constructor(
+    public endpoint: string,
+    public spent: number,
+    public cost: number,
+    public maxCredits: number,
+  ) {
+    super(`credit ceiling: ${endpoint} costs ${cost}, ${spent} already spent, ceiling ${maxCredits} — call not made`);
+    this.name = "BudgetError";
+  }
+}
 
 export class NansenError extends Error {
   constructor(
@@ -84,6 +103,9 @@ export class NansenClient {
   private limiter: RateLimiter;
   protected timeoutMs: number;
   private fetchImpl: typeof fetch;
+  protected maxCredits: number;
+  /** credits committed to calls that passed the ceiling check (in flight or done) — released when a call fails, so a 4-wide pool cannot overshoot */
+  private budgetUsed = 0;
   /** Every call made through this client, in order. */
   readonly calls: Call[] = [];
 
@@ -98,6 +120,14 @@ export class NansenClient {
     this.limiter = new RateLimiter(opts.rps ?? 5); // Nansen cap is 300/min; an atlas makes ~100 sequential calls, 5 rps keeps a full run at 300/min with headroom for a second visitor
     this.timeoutMs = opts.timeoutMs ?? 8000; // Nansen occasionally hangs on very large tokens; 8 s + one retry caps a call at ~17 s
     this.fetchImpl = opts.fetchImpl ?? fetch;
+    this.maxCredits = opts.maxCredits ?? Infinity;
+  }
+
+  /** Refuse (throw BudgetError) when one more live call to `endpoint` would cross the ceiling. Runs before every network attempt. */
+  protected assertBudget(endpoint: string): void {
+    const cost = CREDITS[endpoint] ?? 1;
+    if (this.budgetUsed + cost > this.maxCredits) throw new BudgetError(endpoint, this.budgetUsed, cost, this.maxCredits);
+    this.budgetUsed += cost;
   }
 
   /** POST `endpoint` with a JSON body; one retry on 429/5xx/timeout unless `retries: 0`; records the call. */
@@ -138,6 +168,20 @@ export class NansenClient {
     endpoint: string,
     body: Record<string, unknown>,
     opts: CallOptions = {},
+  ): Promise<{ text: string; ms: number; status: number; attempts: number; totalMs: number }> {
+    this.assertBudget(endpoint);
+    try {
+      return await this.attempt(endpoint, body, opts);
+    } catch (e) {
+      this.budgetUsed -= CREDITS[endpoint] ?? 1; // a failed call is not billed (recordFailure stores it at 0 credits)
+      throw e;
+    }
+  }
+
+  private async attempt(
+    endpoint: string,
+    body: Record<string, unknown>,
+    opts: CallOptions,
   ): Promise<{ text: string; ms: number; status: number; attempts: number; totalMs: number }> {
     const url = `${this.baseUrl}/${endpoint}`;
     const t0 = Date.now();

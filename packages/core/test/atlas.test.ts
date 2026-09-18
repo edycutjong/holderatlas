@@ -205,6 +205,15 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(events.at(-1)?.type).toBe("atlas");
     expect(a.warnings).toEqual([]);
   });
+  it("audit 2026-09-19: `examined` counts the rows in the denominator — a reclassified contract is not 'analysed' in the caption", async () => {
+    const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW });
+    // the holders event says 2 + 6 before any lookup; the final atlas says 2 + 5 because CONTRACT became structural
+    expect(a.examined).toEqual({ custody: 2, human: 5 });
+    const inDenominator = a.rows.filter((r) => r.kind !== "structural").length;
+    expect(a.examined.custody + a.examined.human).toBe(inDenominator);
+    // and the by-wallets number uses that same denominator: US 3 + KR 1 placed of 7
+    expect(a.attributableByWallets).toBeCloseTo(4 / 7, 6);
+  });
   it("the hash is stable across runs and across completion order (concurrency 1 vs 4)", async () => {
     const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 1 });
     const b = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 4 });
@@ -218,9 +227,12 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(atlasHash({ ...a, credits: 999, ms: 1 } as typeof a)).toBe(a.hash);
   });
   it("--holders / --custody cap the examined rows and the caption reports coverage", async () => {
-    const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, holders: 2, custody: 1 });
-    expect(a.examined).toEqual({ custody: 1, human: 2 });
-    // the 150-unit contract was among the top-2 "humans" until the contract check moved it out of the denominator
+    const events: AtlasEvent[] = [];
+    const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, holders: 2, custody: 1, onProgress: (e) => events.push(e) });
+    // the 150-unit contract was among the top-2 "humans" until the contract check moved it out of the denominator:
+    // the holders event says 1 + 2 (what will be examined), the final atlas says 1 + 1 (what the number is over)
+    expect(events.find((e) => e.type === "holders")).toMatchObject({ examined: { custody: 1, human: 2 } });
+    expect(a.examined).toEqual({ custody: 1, human: 1 });
     expect(a.coverage).toBeCloseTo((500 + 60) / 2210, 6);
   });
   it("solana: holders + transfers run, the lookup is skipped, everything traced is 'unnamed', attributable 0 with a warning", async () => {

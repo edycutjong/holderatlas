@@ -2,7 +2,7 @@
  * The engine: token → holders → per-wallet exchange entity (Nansen) → country → one atlas.
  * All Nansen I/O goes through `nansen.ts`; the arithmetic in `aggregate()` is pure and property-tested.
  */
-import { sha256, NansenError, type Call, type NansenClient } from "./client.js";
+import { sha256, NansenError, BudgetError, type Call, type NansenClient } from "./client.js";
 import { canonicalize } from "./cache.js";
 import { nansen, window, isChain, NAMING_CHAINS, type Chain, type HolderRow, type TokenTransfer } from "./nansen.js";
 import { attributeLabel, isStructural, countryName, type Country } from "./labels.js";
@@ -181,6 +181,8 @@ async function settle<T>(p: Promise<T>): Promise<Settled<T>> {
   try {
     return { ok: true, data: await p };
   } catch (e) {
+    // a credit ceiling is not a per-wallet failure: the whole atlas stops, nothing is guessed, the caller sees why
+    if (e instanceof BudgetError) throw e;
     if (e instanceof NansenError) return { ok: false, error: `HTTP ${e.status}: ${e.bodyText.slice(0, 80)}` };
     const err = e as Error;
     return { ok: false, error: err?.name === "AbortError" ? "timeout" : String(err?.message ?? e).slice(0, 120) };
@@ -520,8 +522,9 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     chain,
     naming,
     holdersFetched: parts.length,
-    examined: { custody: custodyRows.length, human: humanRows.length },
-    // computed after the contract check so a reclassified mega-holder counts as structural, not as examined
+    // counted after the contract check: a reclassified mega-holder is structural, so it is neither "analysed" in the
+    // caption nor in the by-wallets denominator (audit 2026-09-19 — DEGEN showed "52 of 100 analysed" over 47 rows)
+    examined: { custody: rows.filter((r) => r.kind === "custody").length, human: rows.filter((r) => r.kind === "human").length },
     coverage: totalSupply > 0 ? agg.analysedSupply / totalSupply : 0,
     structuralShare: totalSupply > 0 ? rows.filter((r) => r.kind === "structural").reduce((n, r) => n + r.supply, 0) / totalSupply : 0,
     rows,

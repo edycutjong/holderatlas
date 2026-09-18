@@ -24,6 +24,7 @@ function projection(a: Atlas) {
     global: a.global && [Number(a.global.share.toFixed(6)), a.global.wallets],
     untraced: a.untraced && [Number(a.untraced.share.toFixed(6)), a.untraced.wallets],
     unnamed: a.unnamed && [Number(a.unnamed.share.toFixed(6)), a.unnamed.wallets],
+    examined: a.examined,
     rows: a.rows?.map((r) => [r.address, r.kind, r.exchange, r.country, r.bucket, r.via]),
     warnings: a.warnings,
   };
