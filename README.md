@@ -25,7 +25,7 @@
 ![fixtures](https://img.shields.io/badge/fixtures-12%2F12%20replay%20offline-22c55e?style=flat)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
 [![CI](https://github.com/edycutjong/holderatlas/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/holderatlas/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/edycutjong/holderatlas/actions/workflows/codeql.yml/badge.svg)](https://github.com/edycutjong/holderatlas/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/edycutjong/holderatlas/actions/workflows/dynamic/github-code-scanning/codeql/badge.svg)](https://github.com/edycutjong/holderatlas/security/code-scanning)
 [![Release](https://img.shields.io/github/v/release/edycutjong/holderatlas?sort=semver&style=flat)](https://github.com/edycutjong/holderatlas/releases/latest)
 
 </div>
@@ -34,7 +34,7 @@
 
 ## 📸 See it in Action
 
-<img src="docs/screenshots/03-pepe.png" alt="Holder Atlas — PEPE on ethereum, live: 40.4% of analysed supply placed on a country; US 24%, KR 10%, GB, TR, NL as green bubbles on the world map; global exchanges 47% and no-trace 12% as grey bars" width="100%">
+<img src="docs/demo.gif" alt="Holder Atlas — 15 s demo: type PEPE, top holders stream in gaining their exchange from Nansen's labels, the world map fills country by country and the attributable % counts up; global exchanges stay grey" width="100%">
 
 | Token in | Wallets stream in, each gains its exchange | The picture |
 |---|---|---|
@@ -172,7 +172,7 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 
 ## 🧪 Testing & CI
 
-**6-stage pipeline:** Quality (Prettier · ESLint · tsc · vitest + coverage · offline replay · readiness) → Security (TruffleHog, npm audit; CodeQL and gitleaks in their own workflows) → Build → E2E smoke of every route without a key → Deploy gate → **Production deploy** (main only: `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod`, then the stable alias is re-pointed). No API key anywhere in CI; the only secret is `VERCEL_TOKEN`. CD runs on every push to `main` once GitHub Actions is enabled for this account (it is billing-blocked at the time of writing — deploys are made locally with the same three commands until then).
+**6-stage pipeline:** Quality (Prettier · ESLint · tsc · vitest + coverage · offline replay · readiness) → Security (TruffleHog, npm audit; CodeQL via GitHub default setup, gitleaks in its own workflow) → Build → E2E smoke of every route without a key → Deploy gate → **Production deploy** (main only: `vercel pull` → `vercel build --prod` → `vercel deploy --prebuilt --prod`, then the stable alias is re-pointed). No API key anywhere in CI; the only secret is `VERCEL_TOKEN`. CD runs on every push to `main` once GitHub Actions is enabled for this account (the repo is public, so Actions runs free of the account billing block).
 
 **Releases:** semantic versions from Conventional Commits — `feat:` → minor, `fix:`/`perf:` → patch, `!`/`BREAKING CHANGE` → major, anything else → no release. `release.yml` runs the algorithm after a green pipeline on `main`; `npm run release` (`--dry-run` to preview) runs the same algorithm locally when Actions cannot: bumps every `package.json` + lockfile, commits `chore(release): vX.Y.Z [skip ci]`, tags, pushes and publishes the [GitHub Release](https://github.com/edycutjong/holderatlas/releases/latest). The footer of every page reads the version from `package.json`, so the deployed site always names its release.
 
