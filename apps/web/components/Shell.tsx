@@ -3,7 +3,7 @@ import pkg from "../package.json";
 
 export const VERSION = `v${pkg.version}`;
 export const REPO = "https://github.com/edycutjong/holderatlas";
-export const SITE = process.env.SITE_URL ?? "https://holderatlas-edycutjong.vercel.app";
+export const SITE = process.env.SITE_URL || "https://holderatlas.edycu.dev";
 
 /** The mark — a globe outline with one green bubble: one place on the map is where the holders are. */
 export function Mark({ size = 24 }: { size?: number }) {

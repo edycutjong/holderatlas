@@ -1,6 +1,6 @@
 # Holder Atlas — for the judge
 
-*Mirrors https://holderatlas-edycutjong.vercel.app/judge (static, no login, no key, no setup).*
+*Mirrors https://holderatlas.edycu.dev/judge (static, no login, no key, no setup).*
 
 **Type a token. One world map of where its holders actually are — and the honest share of supply the map covers.**
 
@@ -9,7 +9,7 @@ the top holders of a token, maps each exchange to its country through a curated 
 one number that keeps the picture honest — as large as the map. Global exchanges are never placed. Grey is never hidden.
 
 ## The 30-second path
-1. Open **https://holderatlas-edycutjong.vercel.app/?q=PEPE&chain=ethereum**. Rows stream in — each wallet gains its exchange
+1. Open **https://holderatlas.edycu.dev/?q=PEPE&chain=ethereum**. Rows stream in — each wallet gains its exchange
    (🏦 Coinbase, 🏦 Upbit, 🏦 Binance…) — the map fills country by country, the bar re-sorts, the number counts to **40.4 %**:
    US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40–60 s, cached ≈ 0 s.
 2. Click **WLFI** — the Korean contrast: Upbit holds half the analysed supply → **55 %**, KR 52. Then **DEGEN · base**: Coinbase → US 54.
@@ -17,7 +17,7 @@ one number that keeps the picture honest — as large as the map. Global exchang
    **Save PNG** — the poster, 1600×900, rendered in the browser.
 4. Click **MEW · solana** — the honest unsupported state: exchanges visible, unnamed, 0 % placed, and the banner says which
    Nansen field is missing.
-5. Open the permalink **https://holderatlas-edycutjong.vercel.app/t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933** — the same
+5. Open the permalink **https://holderatlas.edycu.dev/t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933** — the same
    map by address, and the link preview is the poster. The JSON behind it is `/api/atlas?q=PEPE&chain=ethereum`, which the page
    fetches with a run marker; a bare GET of that URL (a crawler, an unfurler, `curl`) replays the recorded run at 0 credits and
    says so — only the page and the CLI run live.
@@ -58,6 +58,6 @@ npm run verify                       # 12/12 recorded atlases reproduced offline
   shortens the window to 30 days, and skips the rest with a named reason rather than guessing.
 
 ## Links
-- Live: https://holderatlas-edycutjong.vercel.app
+- Live: https://holderatlas.edycu.dev
 - Repo: https://github.com/edycutjong/holderatlas — [README](README.md), [DEMO.md](DEMO.md), [ARCHITECTURE.md](ARCHITECTURE.md), [docs/SCORING.md](docs/SCORING.md), [docs/BENCH.md](docs/BENCH.md), [docs/DX-REPORT.md](docs/DX-REPORT.md)
 - Built by [@edycutjong](https://x.com/edycutjong) for the [Nansen Meridian Buildathon](https://nansen.ai/campaigns/meridian-buildathon)

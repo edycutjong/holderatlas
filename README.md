@@ -11,8 +11,8 @@
 
 <br/>
 
-[![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://holderatlas-edycutjong.vercel.app)
-[![For Judges](https://img.shields.io/badge/⚖️_For-Judges-22c55e?style=for-the-badge)](https://holderatlas-edycutjong.vercel.app/judge)
+[![Live Demo](https://img.shields.io/badge/🚀_Live-Demo-06b6d4?style=for-the-badge)](https://holderatlas.edycu.dev)
+[![For Judges](https://img.shields.io/badge/⚖️_For-Judges-22c55e?style=for-the-badge)](https://holderatlas.edycu.dev/judge)
 [![Built for Nansen Meridian](https://img.shields.io/badge/Nansen-Meridian_Buildathon-7c3aed?style=for-the-badge&labelColor=0a0e13)](https://nansen.ai/campaigns/meridian-buildathon)
 
 <br/>
@@ -198,8 +198,8 @@ fixtures          12 recorded atlases · docs/  SCORING · BENCH · DX-REPORT ·
 ## 📽️ Demo Materials
 
 - [DEMO.md](DEMO.md) — real CLI output, the honest states, the benchmark
-- [JUDGE.md](JUDGE.md) — the 30-second path, receipts, reproduce, limitations (mirrors [/judge](https://holderatlas-edycutjong.vercel.app/judge))
-- Live: https://holderatlas-edycutjong.vercel.app · `/?q=PEPE&chain=ethereum` runs the hero query on load
+- [JUDGE.md](JUDGE.md) — the 30-second path, receipts, reproduce, limitations (mirrors [/judge](https://holderatlas.edycu.dev/judge))
+- Live: https://holderatlas.edycu.dev · `/?q=PEPE&chain=ethereum` runs the hero query on load (fallback alias: https://holderatlas-edycutjong.vercel.app)
 
 ## 📄 License
 
