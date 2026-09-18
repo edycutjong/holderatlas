@@ -22,10 +22,18 @@ import {
   MAX_ATLAS_CREDITS,
   BUDGET_MESSAGE,
   NO_FIXTURE_MESSAGE,
+  CRAWLER_MESSAGE,
+  OPEN_PAGE_MESSAGE,
+  RUN_HEADER,
+  isPageRun,
 } from "@/lib/guard";
 
 const KEY = "nsn_test_key_0000000000000000000000";
+/** the page's own fetch: carries the run marker (RUN_HEADER) — the only kind of request that may go live */
 const req = (q: string, extra = "", ip = "203.0.113.7") =>
+  new NextRequest(`http://localhost:3000/api/atlas?q=${encodeURIComponent(q)}${extra}`, { headers: { "x-forwarded-for": ip, [RUN_HEADER]: "1" } });
+/** a bare GET: a crawler, a link unfurler, a link checker, curl */
+const bare = (q: string, extra = "", ip = "203.0.113.7") =>
   new NextRequest(`http://localhost:3000/api/atlas?q=${encodeURIComponent(q)}${extra}`, { headers: { "x-forwarded-for": ip } });
 
 describe("guard counters", () => {
@@ -209,6 +217,97 @@ describe("route behaviour under the guard", () => {
       expect(res.status).toBe(200);
     }
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("crawler spend trap (audit 2026-09-19: a link checker following /judge's API href spent two cold maps)", () => {
+  const fetchSpy = vi.fn<typeof fetch>();
+  let savedKey: string | undefined;
+  beforeEach(() => {
+    resetGuard();
+    savedKey = process.env.NANSEN_API_KEY;
+    process.env.NANSEN_API_KEY = KEY;
+    vi.stubGlobal("fetch", fetchSpy);
+    fetchSpy.mockReset();
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    if (savedKey === undefined) delete process.env.NANSEN_API_KEY;
+    else process.env.NANSEN_API_KEY = savedKey;
+  });
+
+  it("isPageRun: only the exact marker counts", () => {
+    expect(isPageRun(new Headers({ [RUN_HEADER]: "1" }))).toBe(true);
+    expect(isPageRun(new Headers({ [RUN_HEADER]: "true" }))).toBe(false);
+    expect(isPageRun(new Headers({ "sec-fetch-mode": "cors", "user-agent": "Twitterbot/1.0" }))).toBe(false);
+    expect(isPageRun(new Headers())).toBe(false);
+  });
+
+  it("a bare GET of a fixture token is the labelled replay — 200, replay:true, 0 credits, zero fetches, budget untouched, no IP slot", async () => {
+    const res = await atlasRoute(bare("PEPE", "&chain=ethereum", "192.0.2.1"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.replay).toBe(true);
+    expect(body.degraded).toBe(false);
+    expect(body.credits).toBe(0);
+    expect(body.hash).toBe(JSON.parse(readFileSync("fixtures/PEPE--ethereum.json", "utf8")).atlas.hash);
+    expect(body.warnings).toContain(CRAWLER_MESSAGE);
+    expect(body.warnings).not.toContain(BUDGET_MESSAGE);
+    expect(body.page).toBe("/?q=PEPE&chain=ethereum");
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(creditsLeft()).toBe(DAILY_CREDITS);
+    for (let i = 0; i < IP_PER_MIN; i++) expect(ipAllowed("192.0.2.1").ok).toBe(true); // bare GETs never took a slot
+  });
+
+  it("a bare GET of anything else is a 202 pointing at the page — never a search, never a holders call", async () => {
+    for (const [q, extra] of [
+      ["NOTAFIXTURE", "&chain=ethereum"],
+      ["0xd8da6bf26964af9d7eed9e03e62f31d0d9a0ee8f", "&chain=ethereum"],
+      ["hello world", ""],
+    ]) {
+      const res = await atlasRoute(bare(q, extra));
+      expect(res.status).toBe(202);
+      const body = await res.json();
+      expect(body.message).toBe(OPEN_PAGE_MESSAGE);
+      expect(body.credits).toBe(0);
+      expect(body.page.startsWith("/?q=")).toBe(true);
+    }
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("a bare GET of the recorded no-token fixture is still the honest 404", async () => {
+    const res = await atlasRoute(bare("XQZPLM"));
+    expect(res.status).toBe(404);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("the bare streaming variant replays too, ending with asOf replay:true; a non-fixture ends with the open-page error", async () => {
+    const ok = await atlasRoute(bare("MEW", "&chain=solana&stream=1"));
+    const lines = (await ok.text())
+      .trim()
+      .split("\n")
+      .map((l) => JSON.parse(l));
+    expect(lines[0].type).toBe("token");
+    expect(lines.find((e) => e.type === "atlas").atlas.warnings).toContain(CRAWLER_MESSAGE);
+    expect(lines.at(-1)).toMatchObject({ type: "asOf", replay: true, degraded: false });
+    const none = await atlasRoute(bare("NOTAFIXTURE", "&chain=base&stream=1"));
+    expect(
+      (await none.text())
+        .trim()
+        .split("\n")
+        .map((l) => JSON.parse(l))
+        .at(-1),
+    ).toMatchObject({ type: "error", code: "open-page" });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("the marker is what lets a request go live: the same query with x-atlas-run: 1 reaches the network", async () => {
+    fetchSpy.mockResolvedValue(new Response('{"tokens":[]}', { status: 200 }));
+    // a query no earlier run could have cached on disk (the engine's read-through cache is real under vitest)
+    const res = await atlasRoute(req(`NOFIX${Date.now().toString(36).toUpperCase()}`, "&chain=ethereum"));
+    expect(res.status).toBe(404); // search found nothing — but it WAS asked
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(String(fetchSpy.mock.calls[0][0])).toContain("search/general");
   });
 });
 

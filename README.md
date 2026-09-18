@@ -20,7 +20,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js_15-black?style=flat&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Nansen API](https://img.shields.io/badge/Nansen_API-5_endpoints-7c3aed?style=flat&labelColor=0a0e13)
-![tests](https://img.shields.io/badge/tests-158%20passing-22c55e?style=flat)
+![tests](https://img.shields.io/badge/tests-164%20passing-22c55e?style=flat)
 ![generated cases](https://img.shields.io/badge/generated_cases-24%2C000-22c55e?style=flat)
 ![fixtures](https://img.shields.io/badge/fixtures-12%2F12%20replay%20offline-22c55e?style=flat)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
@@ -117,10 +117,10 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 
 | Metric | Value | Source |
 |---|---|---|
-| Tests | **158 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash | `packages/core/test/` |
+| Tests | **164 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash | `packages/core/test/` |
 | Property-based verification | **24,000 generated cases** (fast-check) = **14,000 property cases** — shares partition the supply, global never attributed, structural never in the denominator, hash purity, label normaliser, every table key resolves (7 × 2,000) — + **10,000 generated malformed queries** → 400 with zero fetches | `property.test.ts`, `boundary.test.ts` |
 | Permission boundary | the server key never reaches a client (atlas, events, provenance, cache keys, errors) | `boundary.test.ts`, [SECURITY.md](.github/SECURITY.md) |
-| Spend guard | 4 maps / IP / min · 3,000 live credits / day; past the ceiling a recorded fixture replays at 0 credits, labelled, or an honest 503 | `apps/web/lib/guard.ts`, `guard.test.ts` |
+| Spend guard | only the page's own fetch (run marker) may go live — a bare GET of `/api/atlas` (crawlers, unfurlers, `curl`) gets the labelled fixture replay or a 202, never a Nansen call · 4 cold maps / IP / min · 3,000 live credits / day; past the ceiling a recorded fixture replays at 0 credits, labelled, or an honest 503 | `apps/web/lib/guard.ts`, `guard.test.ts` |
 | Fixtures | 12/12 atlases reproduced offline, zero network, zero credits — including a recorded timeout replayed as a timeout | `npm run verify`, `fixtures/*.json` |
 | Cold latency | p50 **40.3 s** · p95 **59.0 s** (4 tokens, live, 4-wide pool under 5 rps) | [docs/BENCH.md](docs/BENCH.md) |
 | Warm latency | p50 **7 ms** | [docs/BENCH.md](docs/BENCH.md) |
@@ -175,7 +175,7 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 
 ```bash
 npm run lint && npm run format:check && npm run typecheck
-npm test                       # 158 tests
+npm test                       # 164 tests
 npm run test:coverage          # v8 coverage on packages/core/src
 npm run verify                 # 12/12 offline
 npm run check                  # README claims vs the tree, kitchen/secret scan, git-history key scan
@@ -185,7 +185,7 @@ npm run ci                     # all of the above
 ## 📁 Project Structure
 
 ```
-packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (158)
+packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (164)
 packages/cli      npm run holderatlas -- <token> [--chain] [--holders 40] [--custody 12] [--json --explain --no-cache]
 apps/web          Next 15: the page (stream → picture → PNG) · /t/<chain>/<address> · /api/atlas · /api/og · /judge · guard
 scripts           spike · seed · verify · bench · check_submission_readiness

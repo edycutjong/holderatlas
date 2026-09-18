@@ -17,7 +17,10 @@ one number that keeps the picture honest — as large as the map. Global exchang
    **Save PNG** — the poster, 1600×900, rendered in the browser.
 4. Click **MEW · solana** — the honest unsupported state: exchanges visible, unnamed, 0 % placed, and the banner says which
    Nansen field is missing.
-5. Open **https://holderatlas-edycutjong.vercel.app/api/atlas?q=PEPE&chain=ethereum** — the same atlas as JSON, same hash as the CLI prints.
+5. Open the permalink **https://holderatlas-edycutjong.vercel.app/t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933** — the same
+   map by address, and the link preview is the poster. The JSON behind it is `/api/atlas?q=PEPE&chain=ethereum`, which the page
+   fetches with a run marker; a bare GET of that URL (a crawler, an unfurler, `curl`) replays the recorded run at 0 credits and
+   says so — only the page and the CLI run live.
 
 ## Receipts
 | | |
@@ -26,7 +29,7 @@ one number that keeps the picture honest — as large as the map. Global exchang
 | Benchmark, live | 4 tokens × 1 cold run: **cold p50 40.3 s · p95 59.0 s · warm p50 7 ms · mean 118 credits, max 121** per atlas; 0 failed calls in 444; every warm hash equals its cold hash — [docs/BENCH.md](docs/BENCH.md) |
 | Spike, live (day one) | 6 tokens: median **40.6 %** placed on the five EVM tokens (PEPE 40.6 · WLFI 55.9 · DEGEN 57.7 · LINK 3.5 · USDC 2.0); Solana 0 % because no ≤ 5-credit Nansen field names an exchange there — [docs/SCORING.md](docs/SCORING.md) |
 | Nansen endpoints | `search/general` · `tgm/holders` (all + `label_type: exchange`) · `tgm/transfers` (CEX-only, per wallet) · `transaction-with-token-transfer-lookup` · `profiler/address/related-wallets` — every placement is one of their response fields joined to [exchanges.json](packages/core/src/exchanges.json) (133 rows, one source each) |
-| Tests | **158 tests** (vitest): every label string seen live pinned to its key; the arithmetic property-tested (14,000 generated cases); offline replay = same hash; the page's stream reducer driven by replayed fixtures; the USDC timeout path; the route boundary (10,000 generated garbage queries → 400, zero fetches); the key never reaches a client |
+| Tests | **164 tests** (vitest): every label string seen live pinned to its key; the arithmetic property-tested (14,000 generated cases); offline replay = same hash; the page's stream reducer driven by replayed fixtures; the USDC timeout path; the route boundary (10,000 generated garbage queries → 400, zero fetches); the key never reaches a client |
 | Determinism | 12 recorded atlases replay offline with the same hash, zero network, zero credits — including a recorded timeout, replayed as a timeout |
 | Clean clone → first map | **54 s** of machine time (clone 1 s · install 5 s · first live map 34 s · verify 1 s · build 10 s · tests 3 s), 2026-09-18 11:11 UTC |
 

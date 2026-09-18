@@ -2,11 +2,9 @@ import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { CachedNansenClient, DiskCache, atlas, type Atlas } from "@holderatlas/core";
 import { replayFixture } from "@/lib/guard";
-import { SAFE_QUERY, parseChain } from "@/lib/engine";
+import { SAFE_QUERY, parseChain, CACHE_DIR } from "@/lib/engine";
 import { COUNTRY_PATHS, CENTROIDS, WORLD_W, WORLD_H } from "@/lib/world";
 import { barRows, bubbleR, pct, C, toPoster, type PosterData } from "@/components/Poster";
-import { join } from "node:path";
-import { tmpdir } from "node:os";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,8 +21,7 @@ export async function GET(req: NextRequest) {
     try {
       a = (await replayFixture(q, chain))?.atlas;
       if (!a) {
-        const dir = process.env.VERCEL ? join(tmpdir(), "holderatlas-cache") : join(process.cwd(), "../../.cache");
-        const c = new CachedNansenClient("nsn_offline_og_no_network_000000", { store: new DiskCache(dir), offline: true });
+        const c = new CachedNansenClient("nsn_offline_og_no_network_000000", { store: new DiskCache(CACHE_DIR), offline: true });
         a = await atlas(c, q, { chain });
       }
     } catch {

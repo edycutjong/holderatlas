@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "The claim, the 30-second path, the receipts, the real reproduce command, and the honest limitations.",
 };
 
-const TEST_COUNT = 158;
+const TEST_COUNT = 164;
 const CLEAN_CLONE_S = "54";
 
 export default function Judge() {
@@ -50,11 +50,13 @@ export default function Judge() {
             Click <b>MEW · solana</b> — the honest unsupported state: exchanges visible, unnamed, 0 % placed, and the banner says which Nansen field is missing.
           </li>
           <li>
-            Open{" "}
-            <a href={`${SITE}/api/atlas?q=PEPE&chain=ethereum`}>
-              <code>{SITE}/api/atlas?q=PEPE&amp;chain=ethereum</code>
+            Open the permalink{" "}
+            <a href={`${SITE}/t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933`}>
+              <code>{SITE}/t/ethereum/0x6982…1933</code>
             </a>{" "}
-            — the same atlas as JSON, same hash as the CLI prints.
+            — the same map by address, and the link preview is the poster. The JSON behind it is <code>/api/atlas?q=PEPE&amp;chain=ethereum</code>, which the
+            page fetches with a run marker; a bare GET of that URL (a crawler, an unfurler, <code>curl</code>) replays the recorded run at 0 credits and says so
+            — only the page and the CLI run live.
           </li>
         </ol>
 

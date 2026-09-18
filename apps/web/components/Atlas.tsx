@@ -50,7 +50,11 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
     window.history.replaceState(null, "", url.toString());
     let cur: Live | null = null;
     try {
-      const res = await fetch(`/api/atlas?q=${encodeURIComponent(t)}${ch !== "auto" ? `&chain=${ch}` : ""}&stream=1`, { signal: ctrl.signal });
+      // the marker that lets the route run live: a bare GET (a crawler, an unfurler, curl) never spends a credit
+      const res = await fetch(`/api/atlas?q=${encodeURIComponent(t)}${ch !== "auto" ? `&chain=${ch}` : ""}&stream=1`, {
+        signal: ctrl.signal,
+        headers: { "x-atlas-run": "1" },
+      });
       if (!res.ok || !res.body) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(j.error ?? `HTTP ${res.status}`);

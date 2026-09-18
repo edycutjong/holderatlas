@@ -22,6 +22,9 @@ This is asserted, not described, in `packages/core/test/boundary.test.ts` and re
   answers 500 without a key and 400 to garbage, and the server log is asserted to contain no `nsn_` string.
 
 **The key cannot be drained through the public route** (`apps/web/lib/guard.ts`, `packages/core/test/guard.test.ts`):
+only a request carrying the page's run marker (`x-atlas-run: 1`) may trigger Nansen calls — a bare GET (link unfurlers,
+crawlers, link checkers, `curl`) gets the labelled fixture replay for a recorded token or a **202** "open the page" for any
+other, with zero fetches;
 4 atlases per minute per address (**429** + `Retry-After`), 3,000 live credits per UTC day counted from each atlas's
 own provenance, and past that ceiling a query with a recorded fixture replays offline at 0 credits — labelled in
 `warnings` and `degraded: true` — while one without gets a **503** that says why. Counters are per instance: a

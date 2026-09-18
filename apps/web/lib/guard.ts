@@ -81,6 +81,17 @@ export function resetGuard(): void {
 }
 
 export const BUDGET_MESSAGE = "Today's live Nansen budget is used up — this is a replay of a recorded run.";
+/**
+ * A bare GET (no `x-atlas-run: 1` header — crawlers, link unfurlers, link checkers, curl) never triggers a Nansen call:
+ * a recorded run replays for fixture tokens, anything else gets a 202 pointing at the page. The page's own fetch sets the
+ * header. Audit 2026-09-19: an href-following link checker spent two cold maps (~234 credits) through /judge's API link.
+ */
+export const RUN_HEADER = "x-atlas-run";
+export const CRAWLER_MESSAGE = "Replay of a recorded run: a bare GET of this API never spends Nansen credits — open the page to run it live.";
+export const OPEN_PAGE_MESSAGE = "This token has no recorded run and a bare GET never runs a live map — open the page to run it.";
+export function isPageRun(headers: Headers): boolean {
+  return headers.get(RUN_HEADER) === "1";
+}
 export const NO_FIXTURE_MESSAGE =
   "Today's live Nansen budget is used up and this token has no recorded run. Try PEPE, WLFI, DEGEN or MOG, or come back tomorrow.";
 
@@ -107,18 +118,19 @@ export async function replayFixture(
   q: string,
   chain?: string,
   opts: Omit<AtlasOptions, "chain" | "now"> = {},
+  message: string = BUDGET_MESSAGE,
 ): Promise<{ atlas: Atlas; oldestHit: string } | undefined> {
   const path = fixturePath(q, chain);
   if (!path) return undefined;
   const f = readFixture(path);
   const c = new CachedNansenClient("nsn_offline_replay_no_network", { store: fixtureStore(f), offline: true });
   const onProgress: AtlasOptions["onProgress"] = (e) => {
-    if (e.type === "atlas" && !e.atlas.warnings.includes(BUDGET_MESSAGE)) e.atlas.warnings.push(BUDGET_MESSAGE);
+    if (e.type === "atlas" && !e.atlas.warnings.includes(message)) e.atlas.warnings.push(message);
     opts.onProgress?.(e);
   };
   try {
     const a = await atlas(c, q, { chain: f.options.chain, holders: f.options.holders, custody: f.options.custody, now: f.now, ...opts, onProgress });
-    if (!a.warnings.includes(BUDGET_MESSAGE)) a.warnings.push(BUDGET_MESSAGE);
+    if (!a.warnings.includes(message)) a.warnings.push(message);
     return { atlas: a, oldestHit: c.oldestHit ?? f.recordedAt };
   } catch (e) {
     if (e instanceof AtlasError) throw e;
