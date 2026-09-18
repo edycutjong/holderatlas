@@ -35,7 +35,14 @@ const short = (a: string) => (a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
 const bar = (x: number, w = 24) => "█".repeat(Math.round(x * w)).padEnd(w, "░");
 
-const client = cachedClientFromEnv({ ttlMs: flags.has("--no-cache") ? 0 : undefined });
+let client: ReturnType<typeof cachedClientFromEnv>;
+try {
+  client = cachedClientFromEnv({ ttlMs: flags.has("--no-cache") ? 0 : undefined });
+} catch (e) {
+  // a stranger's first run without the key got a stack trace (clean-clone audit 2026-09-19) — say what to do instead
+  console.error(`${R}${(e as Error).message}${X}\n${D}export NANSEN_API_KEY=nsn_...   # your key from https://app.nansen.ai/api — the only configuration${X}`);
+  process.exit(2);
+}
 let a: Atlas;
 try {
   a = await atlas(client, input, {
