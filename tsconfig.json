@@ -9,7 +9,7 @@
     "resolveJsonModule": true,
     "jsx": "preserve",
     "types": ["node"],
-    "paths": { "@holderatlas/core": ["./packages/core/src/index.ts"], "@/*": ["./apps/web/*"] }
+    "paths": { "@holderatlas/core": ["./packages/core/src/index.ts"], "@core/*": ["./packages/core/src/*"], "@/*": ["./apps/web/*"] }
   },
   "include": ["packages/**/*.ts", "scripts/**/*.ts"]
 }

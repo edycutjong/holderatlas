@@ -1,0 +1,354 @@
+"use client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Poster, pct, toPoster, type PosterData } from "./Poster";
+import { Drawer } from "./Drawer";
+import { Example, HowItDecides } from "./Example";
+import { svgToPngBlob, download } from "@/lib/png";
+import { CHAINS } from "@core/nansen";
+import { countryName } from "@core/labels";
+import type { Atlas as AtlasT, AtlasEvent, Candidate, WalletRow, Call } from "@holderatlas/core";
+
+const EXAMPLES: Array<{ q: string; chain: string }> = [
+  { q: "PEPE", chain: "ethereum" },
+  { q: "WLFI", chain: "ethereum" },
+  { q: "DEGEN", chain: "base" },
+  { q: "MOG", chain: "ethereum" },
+  { q: "ARB", chain: "arbitrum" },
+  { q: "MEW", chain: "solana" },
+];
+
+type Phase = "idle" | "streaming" | "done" | "error";
+type Live = {
+  data: PosterData;
+  rows: WalletRow[];
+  calls: Call[];
+  credits: number;
+  ms: number;
+  hash: string;
+  warnings: string[];
+  asOf: string | null;
+  degraded: boolean;
+  candidates: Candidate[];
+};
+
+const emptyBucket = { share: 0, supply: 0, wallets: 0, exchanges: [] as string[] };
+
+export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery?: string; initialChain?: string; example: AtlasT; exampleFile: string }) {
+  const [q, setQ] = useState(initialQuery ?? "");
+  const [chain, setChain] = useState(initialChain && (CHAINS as readonly string[]).includes(initialChain) ? initialChain : "auto");
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [status, setStatus] = useState("");
+  const [error, setError] = useState<{ message: string; candidates?: Candidate[] } | null>(null);
+  const [live, setLive] = useState<Live | null>(null);
+  const [drawer, setDrawer] = useState(false);
+  const [toast, setToast] = useState("");
+  const abortRef = useRef<AbortController | null>(null);
+  const posterRef = useRef<HTMLDivElement>(null);
+
+  const run = useCallback(async (term: string, ch: string) => {
+    const t = term.trim();
+    if (!t) return;
+    abortRef.current?.abort();
+    const ctrl = new AbortController();
+    abortRef.current = ctrl;
+    setPhase("streaming");
+    setError(null);
+    setDrawer(false);
+    setStatus("resolving the token…");
+    setLive(null);
+    const url = new URL(window.location.href);
+    url.searchParams.set("q", t);
+    if (ch !== "auto") url.searchParams.set("chain", ch);
+    else url.searchParams.delete("chain");
+    window.history.replaceState(null, "", url.toString());
+    let cur: Live | null = null;
+    const set = (patch: Partial<Live>) => {
+      cur = { ...(cur ?? blank()), ...patch };
+      setLive(cur);
+    };
+    try {
+      const res = await fetch(`/api/atlas?q=${encodeURIComponent(t)}${ch !== "auto" ? `&chain=${ch}` : ""}&stream=1`, { signal: ctrl.signal });
+      if (!res.ok || !res.body) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl);
+          buf = buf.slice(nl + 1);
+          if (!line.trim()) continue;
+          const e = JSON.parse(line) as AtlasEvent | { type: "error"; message: string; candidates?: Candidate[] } | { type: "asOf"; asOf: string | null; degraded: boolean };
+          if (e.type === "token") {
+            set({ data: { ...blank().data, token: e.token, chain: e.token.chain, naming: e.token.chain !== "solana" }, candidates: e.candidates });
+            setStatus(`${e.token.symbol} on ${e.token.chain} — fetching the top holders…`);
+          } else if (e.type === "holders") {
+            set({ data: { ...cur!.data, holdersFetched: e.fetched, examined: e.examined, progress: { done: 0, total: e.examined.custody + e.examined.human } } });
+            setStatus(`${e.fetched} holders: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts — naming ${e.examined.custody + e.examined.human} of them…`);
+          } else if (e.type === "wallet") {
+            const rows = [...cur!.rows, e.row];
+            set({
+              rows,
+              data: { ...cur!.data, countries: e.partial.countries, global: e.partial.global, untraced: e.partial.untraced, unnamed: e.partial.unnamed, otherEntity: e.partial.otherEntity, errors: e.partial.errors, attributable: e.partial.attributable, attributableByWallets: e.partial.attributableByWallets, progress: { done: e.done, total: e.total } },
+            });
+            setStatus(`${e.done}/${e.total} wallets · ${pct(e.partial.attributable)} placed so far`);
+          } else if (e.type === "reclass") {
+            set({ rows: cur!.rows.map((r) => (r.address === e.row.address ? e.row : r)) });
+          } else if (e.type === "atlas") {
+            const a = e.atlas;
+            set({ data: toPoster(a), rows: a.rows, calls: a.calls, credits: a.credits, ms: a.ms, hash: a.hash, warnings: a.warnings, candidates: a.candidates });
+          } else if (e.type === "asOf") {
+            set({ asOf: e.asOf, degraded: e.degraded });
+          } else if (e.type === "error") {
+            setError({ message: e.message, candidates: e.candidates });
+            setPhase("error");
+            setStatus("");
+            return;
+          }
+        }
+      }
+      if (!cur || !(cur as Live).hash) {
+        setError({ message: "the stream ended before the map was finished — try again" });
+        setPhase("error");
+        setStatus("");
+        return;
+      }
+      setPhase("done");
+      const c = cur as Live;
+      setStatus(`${c.credits} credits · ${c.calls.length} calls${c.asOf ? ` · as of ${c.asOf.slice(11, 16)} UTC` : ""} · ${(c.ms / 1000).toFixed(1)} s · atlas ${c.hash}`);
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
+      setError({ message: (err as Error).message });
+      setPhase("error");
+      setStatus("");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (initialQuery) void run(initialQuery, initialChain && (CHAINS as readonly string[]).includes(initialChain) ? initialChain : "auto");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const savePng = async () => {
+    const svg = posterRef.current?.querySelector("svg");
+    if (!svg) return;
+    try {
+      const blob = await svgToPngBlob(svg, 1600, 900, 1);
+      const name = `holderatlas-${(live?.data.token.symbol ?? "atlas").toLowerCase()}-${live?.data.chain ?? ""}.png`;
+      download(blob, name);
+      flash("PNG saved");
+    } catch (e) {
+      flash((e as Error).message);
+    }
+  };
+  const share = async () => {
+    if (!live) return;
+    const url = `${window.location.origin}/t/${live.data.chain}/${live.data.token.address}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      flash("link copied");
+    } catch {
+      flash(url);
+    }
+  };
+  const flash = (m: string) => {
+    setToast(m);
+    setTimeout(() => setToast(""), 2200);
+  };
+
+  const idle = phase === "idle";
+  const progress = live?.data.progress;
+  const pctDone = progress && progress.total ? Math.round((progress.done / progress.total) * 100) : phase === "streaming" ? 5 : 100;
+
+  return (
+    <main className="wrap">
+      <header className="hero">
+        <h1>
+          Where are the <span className="real">holders</span>?
+        </h1>
+        <p>Type a token. One map of the countries its holders reach exchanges from — and how much of the supply that honestly covers.</p>
+      </header>
+      <div className="panel">
+        <form
+          className="search"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void run(q, chain);
+          }}
+        >
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="a ticker like PEPE — or an address with its chain" aria-label="token ticker or address" maxLength={44} autoFocus spellCheck={false} />
+          <select value={chain} onChange={(e) => setChain(e.target.value)} aria-label="chain">
+            <option value="auto">any chain</option>
+            {CHAINS.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <button type="submit" disabled={phase === "streaming"}>
+            {phase === "streaming" ? "Mapping…" : "Map"}
+          </button>
+        </form>
+        <div className="chips" role="group" aria-label="examples">
+          {EXAMPLES.map((x) => (
+            <button
+              key={`${x.q}-${x.chain}`}
+              type="button"
+              className={`chip ${live?.data.token.symbol === x.q && live?.data.chain === x.chain ? "on" : ""}`}
+              onClick={() => {
+                setQ(x.q);
+                setChain(x.chain);
+                void run(x.q, x.chain);
+              }}
+            >
+              {x.q}
+              <span style={{ opacity: 0.6 }}> · {x.chain}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className={`progress ${idle ? "hidden" : ""}`} aria-hidden>
+        <i style={{ width: `${phase === "done" ? 100 : pctDone}%`, background: phase === "error" ? "var(--impostor)" : undefined }} />
+      </div>
+      <p className={`status ${idle ? "hidden" : ""}`} aria-live="polite">
+        {status}
+      </p>
+
+      {error ? (
+        <div className="banner err" role="alert">
+          {error.message}
+          {error.candidates?.length ? <small>Nansen found: {error.candidates.map((c) => `${c.symbol} on ${c.chain}`).join(" · ")}</small> : null}
+        </div>
+      ) : null}
+      {live?.degraded ? (
+        <div className="banner warn">
+          Today&rsquo;s live budget is used up — this is a replay of a recorded run. <small>Same engine, same responses, same hash; recorded {live.asOf?.slice(0, 10)}.</small>
+        </div>
+      ) : null}
+      {live && phase === "done" && !live.data.naming ? (
+        <div className="banner warn">
+          {live.data.chain}: exchanges are visible but cannot be named on this API path — the custody share is shown, nothing is placed.
+          <small>Nansen&rsquo;s transaction-with-token-transfer-lookup, the only ≤ 5-credit field carrying an exchange entity, has no {live.data.chain} support.</small>
+        </div>
+      ) : null}
+      {live && phase === "done" && live.data.naming && live.data.countries.length === 0 ? (
+        <div className="banner warn">
+          No examined holder reaches a regional exchange — every traced wallet touched a global one. <small>The map is honest at 0 %; the bar shows where the supply sits instead.</small>
+        </div>
+      ) : null}
+
+      {live ? (
+        <>
+          <div className={`picture ${phase === "streaming" ? "streaming" : phase === "done" ? "done" : ""}`} ref={posterRef}>
+            <Poster d={live.data} interactive />
+          </div>
+          <div className="picture-actions">
+            <button className="btn primary" onClick={savePng} disabled={phase !== "done"}>
+              Save PNG
+            </button>
+            <button className="btn" onClick={share} disabled={phase !== "done"}>
+              Copy link
+            </button>
+            <button className="btn" onClick={() => setDrawer(true)} disabled={!live.calls.length}>
+              Every Nansen call ({live.calls.length})
+            </button>
+            <span className="meta">
+              {live.candidates.length > 1 ? `${live.candidates.length} tokens share this name on Nansen · ` : ""}
+              {live.data.token.address}
+            </span>
+          </div>
+          {live.warnings.filter((w) => !w.startsWith("Today")).map((w) => (
+            <p key={w} className="candidates">
+              ⚠ {w}
+            </p>
+          ))}
+          <div className="rows-head">
+            <h2>
+              {live.rows.filter((r) => r.kind !== "structural").length} wallets, one exchange each
+            </h2>
+            <span>custody first, then people by supply · most recent exchange wins</span>
+          </div>
+          <div className="rows" aria-live="polite">
+            {[...live.rows]
+              .filter((r) => r.kind !== "structural")
+              .sort((a, b) => b.supply - a.supply)
+              .map((r) => (
+                <Row key={r.address} r={r} />
+              ))}
+          </div>
+        </>
+      ) : null}
+
+      {idle ? (
+        <>
+          <Example atlas={example} onRun={() => run(example.input, example.chain)} />
+          <HowItDecides />
+        </>
+      ) : null}
+
+      <Drawer calls={live?.calls ?? []} open={drawer} onClose={() => setDrawer(false)} credits={live?.credits ?? 0} ms={live?.ms ?? 0} asOf={live?.asOf} hash={live?.hash} />
+      {toast ? <div className="toast">{toast}</div> : null}
+    </main>
+  );
+}
+
+function Row({ r }: { r: WalletRow }) {
+  const where =
+    r.bucket === "country" ? (
+      <span className="where country">
+        {r.country} · {countryName(r.country!)}
+      </span>
+    ) : r.bucket === "global" ? (
+      <span className="where grey">global · no location</span>
+    ) : r.bucket === "unnamed" ? (
+      <span className="where warn">exchange, unnamed</span>
+    ) : r.bucket === "other-entity" ? (
+      <span className="where warn">not in table</span>
+    ) : r.bucket === "error" ? (
+      <span className="where err">lookup failed</span>
+    ) : (
+      <span className="where grey">no exchange trace</span>
+    );
+  return (
+    <div className="row">
+      <span className="kind">{r.kind}</span>
+      <span className="addr" title={r.address}>
+        {r.address.slice(0, 8)}…{r.address.slice(-4)} {r.label ? <span style={{ color: "var(--muted)" }}>· {r.label.slice(0, 28)}</span> : null}
+      </span>
+      <span>
+        {r.entityLabel ? <span className="exch" title={r.entityLabel}>{cleanLabel(r.entityLabel)}</span> : null} {where}
+      </span>
+      <span className="share">{pct(r.share, 2)}</span>
+    </div>
+  );
+}
+
+function cleanLabel(l: string) {
+  return l
+    .replace(/\[0x[0-9a-f]+\]/gi, "")
+    .replace(/[​-‏﻿]/g, "")
+    .trim();
+}
+
+function blank(): Live {
+  return {
+    data: { token: { symbol: "…", name: "", chain: "ethereum", address: "", marketCap: null }, chain: "ethereum", naming: true, countries: [], global: emptyBucket, otherEntity: emptyBucket, untraced: emptyBucket, unnamed: emptyBucket, errors: emptyBucket, attributable: 0, attributableByWallets: 0, custodyShare: 0, structuralShare: 0, examined: { custody: 0, human: 0 }, holdersFetched: 0, coverage: 0 },
+    rows: [],
+    calls: [],
+    credits: 0,
+    ms: 0,
+    hash: "",
+    warnings: [],
+    asOf: null,
+    degraded: false,
+    candidates: [],
+  };
+}
+

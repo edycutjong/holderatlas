@@ -159,32 +159,41 @@ async function settle<T>(p: Promise<T>): Promise<Settled<T>> {
   }
 }
 
-/** Pick the 🏦 label that names the exchange side of a transfer involving `wallet`. */
+/**
+ * Pick the 🏦 label that names the exchange side of a transfer involving `wallet`. Candidates are collected in priority
+ * order (the wallet's own transfer of THIS token first, then any 🏦 party in the transaction); a label whose entity is in
+ * exchanges.json beats one that is not — Nansen puts 🏦 on DEX pools and custodians too ("🤖 🏦 Uniswap: V3 … Pool"),
+ * and a CEX withdrawal that lands in the same transaction as a swap must resolve to the CEX, not the pool.
+ */
 export function exchangeLabelFor(transfers: TokenTransfer[] | null | undefined, wallet: string, kind: WalletKind, token: string): string | null {
   if (!transfers?.length) return null;
   const w = lc(wallet);
   const tok = lc(token);
   const sameToken = transfers.filter((t) => !t.token_address || lc(t.token_address) === tok);
   const pool = sameToken.length ? sameToken : transfers;
+  const candidates: string[] = [];
+  const add = (l: string | null | undefined) => {
+    if (l && attributeLabel(l).entity && !candidates.includes(l)) candidates.push(l);
+  };
   if (kind === "custody") {
     // the wallet itself is the exchange: its own label names it
     for (const t of pool) {
-      if (lc(t.from_address) === w && attributeLabel(t.from_address_label).entity) return t.from_address_label ?? null;
-      if (lc(t.to_address) === w && attributeLabel(t.to_address_label).entity) return t.to_address_label ?? null;
+      if (lc(t.from_address) === w) add(t.from_address_label);
+      if (lc(t.to_address) === w) add(t.to_address_label);
     }
-    return null;
+  } else {
+    // human: the counterparty on the wallet's own transfer names the exchange
+    for (const t of pool) {
+      if (lc(t.to_address) === w) add(t.from_address_label);
+      if (lc(t.from_address) === w) add(t.to_address_label);
+    }
+    // fallback: any 🏦 party in the transaction that is not the wallet
+    for (const t of pool) {
+      if (lc(t.from_address) !== w) add(t.from_address_label);
+      if (lc(t.to_address) !== w) add(t.to_address_label);
+    }
   }
-  // human: the counterparty on the wallet's own transfer names the exchange
-  for (const t of pool) {
-    if (lc(t.to_address) === w && attributeLabel(t.from_address_label).entity) return t.from_address_label ?? null;
-    if (lc(t.from_address) === w && attributeLabel(t.to_address_label).entity) return t.to_address_label ?? null;
-  }
-  // fallback: any 🏦 label in the transaction that is not the wallet
-  for (const t of pool) {
-    if (lc(t.from_address) !== w && attributeLabel(t.from_address_label).entity) return t.from_address_label ?? null;
-    if (lc(t.to_address) !== w && attributeLabel(t.to_address_label).entity) return t.to_address_label ?? null;
-  }
-  return null;
+  return candidates.find((l) => attributeLabel(l).exchange) ?? candidates[0] ?? null;
 }
 
 /** Partition holder rows: burn/pool/contract → structural; in the exchange set → custody; else human. Sorted by supply desc. */

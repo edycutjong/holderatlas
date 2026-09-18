@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@holderatlas/core": new URL("./packages/core/src/index.ts", import.meta.url).pathname,
+      "@core": new URL("./packages/core/src", import.meta.url).pathname,
       "@": new URL("./apps/web", import.meta.url).pathname,
     },
   },

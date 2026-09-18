@@ -295,3 +295,16 @@ describe("timeout probes (USDC, live 2026-09-18: the per-wallet transfer filter 
     expect(c.rows.find((r) => r.address === addr(2))?.bucket).toBe("country");
   });
 });
+
+describe("exchangeLabelFor prefers a known exchange over a 🏦-tagged pool (WLFI live 2026-09-18)", () => {
+  it("a swap + CEX deposit in one transaction resolves to the CEX", () => {
+    const w = addr(1);
+    const arr = [
+      { from_address: w, from_address_label: null, to_address: addr(2), to_address_label: "🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool [0x4637ea]", token_address: PEPE },
+      { from_address: w, from_address_label: null, to_address: addr(3), to_address_label: "🏦 MEXC: Deposit [0xbff099]", token_address: PEPE },
+    ];
+    expect(exchangeLabelFor(arr, w, "human", PEPE)).toBe("🏦 MEXC: Deposit [0xbff099]");
+    // with no known exchange in the transaction, the first entity still surfaces (as other-entity upstream)
+    expect(exchangeLabelFor(arr.slice(0, 1), w, "human", PEPE)).toMatch(/Uniswap/);
+  });
+});
