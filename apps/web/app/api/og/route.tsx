@@ -38,11 +38,25 @@ export async function GET(req: NextRequest) {
 
 function Generic() {
   return (
-    <div style={{ display: "flex", width: 1200, height: 675, background: C.surface, color: C.text, flexDirection: "column", justifyContent: "center", padding: 80, fontFamily: "sans-serif" }}>
+    <div
+      style={{
+        display: "flex",
+        width: 1200,
+        height: 675,
+        background: C.surface,
+        color: C.text,
+        flexDirection: "column",
+        justifyContent: "center",
+        padding: 80,
+        fontFamily: "sans-serif",
+      }}
+    >
       <div style={{ display: "flex", fontSize: 72, fontWeight: 800 }}>
         Where are the&nbsp;<span style={{ color: C.real }}>holders</span>?
       </div>
-      <div style={{ display: "flex", fontSize: 30, color: C.text2, marginTop: 20 }}>Type a token. One map of the countries its holders reach exchanges from — and how much of the supply that honestly covers.</div>
+      <div style={{ display: "flex", fontSize: 30, color: C.text2, marginTop: 20 }}>
+        Type a token. One map of the countries its holders reach exchanges from — and how much of the supply that honestly covers.
+      </div>
       <div style={{ display: "flex", fontSize: 22, color: C.muted, marginTop: 40 }}>holderatlas · built on the Nansen API</div>
     </div>
   );
@@ -54,7 +68,18 @@ function Card({ d }: { d: PosterData }) {
   const mapW = 640,
     mapH = 320;
   return (
-    <div style={{ display: "flex", width: 1200, height: 675, background: C.surface, color: C.text, flexDirection: "column", padding: "36px 44px", fontFamily: "sans-serif" }}>
+    <div
+      style={{
+        display: "flex",
+        width: 1200,
+        height: 675,
+        background: C.surface,
+        color: C.text,
+        flexDirection: "column",
+        padding: "36px 44px",
+        fontFamily: "sans-serif",
+      }}
+    >
       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
         <div style={{ display: "flex", fontSize: 34, fontWeight: 800 }}>{d.token.symbol}</div>
         <div style={{ display: "flex", fontSize: 20, color: C.muted }}>
@@ -67,14 +92,18 @@ function Card({ d }: { d: PosterData }) {
             <div style={{ display: "flex", fontSize: 150, fontWeight: 800, letterSpacing: -6, lineHeight: 1 }}>{(d.attributable * 100).toFixed(0)}</div>
             <div style={{ display: "flex", fontSize: 70, fontWeight: 800, color: C.real, marginLeft: 6 }}>%</div>
           </div>
-          <div style={{ display: "flex", fontSize: 20, color: C.text2, marginTop: -6 }}>of analysed supply placed on a country · {pct(d.attributableByWallets, 0)} of wallets</div>
+          <div style={{ display: "flex", fontSize: 20, color: C.text2, marginTop: -6 }}>
+            of analysed supply placed on a country · {pct(d.attributableByWallets, 0)} of wallets
+          </div>
           <svg width={mapW} height={mapH} viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} style={{ marginTop: 14 }}>
             {COUNTRY_PATHS.map((p) => (
               <path key={p.code} d={p.d} fill={C.surface2} stroke={C.border} strokeWidth="0.75" />
             ))}
             {d.countries.map((c) => {
               const at = CENTROIDS[c.code];
-              return at ? <circle key={c.code} cx={at[0]} cy={at[1]} r={bubbleR(c.share)} fill={C.real} fillOpacity="0.88" stroke={C.surface} strokeWidth="2" /> : null;
+              return at ? (
+                <circle key={c.code} cx={at[0]} cy={at[1]} r={bubbleR(c.share)} fill={C.real} fillOpacity="0.88" stroke={C.surface} strokeWidth="2" />
+              ) : null;
             })}
           </svg>
         </div>
@@ -82,9 +111,19 @@ function Card({ d }: { d: PosterData }) {
           <div style={{ display: "flex", fontSize: 18, fontWeight: 700, color: C.text2, marginBottom: 8 }}>Where the analysed supply is</div>
           {rows.map((r) => (
             <div key={r.key} style={{ display: "flex", alignItems: "center", height: 50, gap: 10 }}>
-              <div style={{ display: "flex", width: 110, fontSize: 17, fontWeight: 800, whiteSpace: "nowrap", color: r.kind === "country" ? C.text : C.text2 }}>{r.label}</div>
+              <div style={{ display: "flex", width: 110, fontSize: 17, fontWeight: 800, whiteSpace: "nowrap", color: r.kind === "country" ? C.text : C.text2 }}>
+                {r.label}
+              </div>
               <div style={{ display: "flex", width: 240 }}>
-                <div style={{ display: "flex", width: Math.max(4, (r.share / scale) * 240), height: 20, borderRadius: "0 4px 4px 0", background: r.kind === "country" ? C.real : r.kind === "untraced" ? C.greyDim : C.grey }} />
+                <div
+                  style={{
+                    display: "flex",
+                    width: Math.max(4, (r.share / scale) * 240),
+                    height: 20,
+                    borderRadius: "0 4px 4px 0",
+                    background: r.kind === "country" ? C.real : r.kind === "untraced" ? C.greyDim : C.grey,
+                  }}
+                />
               </div>
               <div style={{ display: "flex", fontSize: 18, fontWeight: 700 }}>{pct(r.share)}</div>
               <div style={{ display: "flex", fontSize: 14, color: C.muted, whiteSpace: "nowrap" }}>{r.wallets} w</div>
@@ -94,7 +133,8 @@ function Card({ d }: { d: PosterData }) {
         </div>
       </div>
       <div style={{ display: "flex", fontSize: 15, color: C.muted }}>
-        {d.examined.custody + d.examined.human} of {d.holdersFetched} top holders · custody {pct(d.custodyShare, 0)} · green = placed on a country, grey = global exchange or no trace · Nansen API
+        {d.examined.custody + d.examined.human} of {d.holdersFetched} top holders · custody {pct(d.custodyShare, 0)} · green = placed on a country, grey =
+        global exchange or no trace · Nansen API
       </div>
     </div>
   );

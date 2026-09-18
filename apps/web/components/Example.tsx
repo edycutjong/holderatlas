@@ -12,7 +12,8 @@ export function Example({ atlas, onRun }: { atlas: Atlas; onRun: () => void }) {
             <span className="kicker">example</span> {atlas.token.symbol} — {(atlas.attributable * 100).toFixed(0)} % of the analysed supply can be placed
           </h2>
           <p className="example-sub">
-            {atlas.calls.length} Nansen calls · recorded {atlas.asOf.slice(0, 10)} · replayed from <code>fixtures/PEPE--ethereum.json</code> · 0 credits · <code>{atlas.hash}</code>
+            {atlas.calls.length} Nansen calls · recorded {atlas.asOf.slice(0, 10)} · replayed from <code>fixtures/PEPE--ethereum.json</code> · 0 credits ·{" "}
+            <code>{atlas.hash}</code>
           </p>
         </div>
         <button className="btn primary" onClick={onRun}>
@@ -36,28 +37,50 @@ export function HowItDecides() {
       <ol className="how-grid">
         <li className="how-step">
           <span className="how-n">1</span>
-          <code className="how-ep">search/<wbr />general</code>
+          <code className="how-ep">
+            search/
+            <wbr />
+            general
+          </code>
           <span className="how-cr">0 cr</span>
           <p>ticker → the token and its chain</p>
           <p className="how-decides">→ which contract to map</p>
         </li>
         <li className="how-step">
           <span className="how-n">2</span>
-          <code className="how-ep">tgm/<wbr />holders ×2</code>
+          <code className="how-ep">
+            tgm/
+            <wbr />
+            holders ×2
+          </code>
           <span className="how-cr">5 + 5 cr</span>
           <p>top 100 holders, and which of them are exchange custody</p>
           <p className="how-decides">→ custody · people · pools (excluded)</p>
         </li>
         <li className="how-step">
           <span className="how-n">3</span>
-          <code className="how-ep">tgm/<wbr />transfers</code>
+          <code className="how-ep">
+            tgm/
+            <wbr />
+            transfers
+          </code>
           <span className="how-cr">1 cr / wallet</span>
           <p>the wallet&rsquo;s newest exchange-touching transfer of this token</p>
           <p className="how-decides">→ a transaction hash, or &ldquo;no trace&rdquo;</p>
         </li>
         <li className="how-step">
           <span className="how-n">4</span>
-          <code className="how-ep">transaction-<wbr />with-<wbr />token-<wbr />transfer-<wbr />lookup</code>
+          <code className="how-ep">
+            transaction-
+            <wbr />
+            with-
+            <wbr />
+            token-
+            <wbr />
+            transfer-
+            <wbr />
+            lookup
+          </code>
           <span className="how-cr">1 cr / wallet</span>
           <p>the exchange entity on that transfer: &ldquo;🏦 Upbit&rdquo;, &ldquo;🏦 Coinbase&rdquo;</p>
           <p className="how-decides">→ exchanges.json → country, or global</p>

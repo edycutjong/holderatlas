@@ -29,9 +29,14 @@ for (const t of TOKENS) {
       onProgress: (e) => {
         if (e.type === "wallet") {
           const r = e.row;
-          console.log(`  ${r.kind.padEnd(7)} ${r.address.slice(0, 10)} ${(r.share * 100).toFixed(2).padStart(6)}%  ${r.via ?? "-"}  ${r.entityLabel ?? (r.error ? "ERR " + r.error : "—")}  → ${r.exchange ?? "?"} ${r.country ?? ""} [${r.bucket}] ${r.calls} calls`);
+          console.log(
+            `  ${r.kind.padEnd(7)} ${r.address.slice(0, 10)} ${(r.share * 100).toFixed(2).padStart(6)}%  ${r.via ?? "-"}  ${r.entityLabel ?? (r.error ? "ERR " + r.error : "—")}  → ${r.exchange ?? "?"} ${r.country ?? ""} [${r.bucket}] ${r.calls} calls`,
+          );
         }
-        if (e.type === "holders") console.log(`  holders fetched ${e.fetched}: custody ${e.custody} · human ${e.human} · structural ${e.structural} → examining ${e.examined.custody}+${e.examined.human}`);
+        if (e.type === "holders")
+          console.log(
+            `  holders fetched ${e.fetched}: custody ${e.custody} · human ${e.human} · structural ${e.structural} → examining ${e.examined.custody}+${e.examined.human}`,
+          );
       },
     });
     const line = {
@@ -64,5 +69,8 @@ for (const t of TOKENS) {
 console.log("\n=== SUMMARY");
 console.table(results.map(({ entities: _e, warnings: _w, countries: _c, ...r }) => r));
 for (const r of results) console.log(r.token, "→", r.countries, "| entities:", r.entities, "| warnings:", r.warnings);
-const attr = results.map((r) => r.attributable as number).filter((n) => typeof n === "number").sort((a, b) => a - b);
+const attr = results
+  .map((r) => r.attributable as number)
+  .filter((n) => typeof n === "number")
+  .sort((a, b) => a - b);
 console.log("median attributable (supply-weighted):", attr[Math.floor(attr.length / 2)], "% over", attr.length, "tokens · total credits", client.creditsSpent);

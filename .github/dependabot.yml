@@ -1,0 +1,49 @@
+version: 2
+updates:
+  # One block per manifest directory — Dependabot silently ignores workspace lockfiles it is not pointed at.
+  # packages/cli has no block: its only dependency is the workspace package @holderatlas/core, which is not on the
+  # registry (Dependabot 404s on it).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      # Major bumps are framework migrations, not maintenance. They break CI on a
+      # frozen submission and must be a deliberate, separate piece of work.
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@holderatlas/core" # workspace package, not on the registry
+  - package-ecosystem: "npm"
+    directory: "/packages/core"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]

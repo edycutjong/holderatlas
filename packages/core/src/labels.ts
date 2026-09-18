@@ -34,13 +34,18 @@ export function entityKey(label: string | null | undefined): string | null {
   let s = label
     .replace(/\[0x[0-9a-f]+\]/gi, "")
     // emoji (🏦 🤖 …), variation selectors, and the zero-width characters Nansen prefixes some labels with ("\u200b\u200b🏦 Upbit")
+    // eslint-disable-next-line no-misleading-character-class -- the variation selector and zero-width marks are exactly what is being stripped
     .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200B}-\u{200F}\u{FEFF}\u{2060}]/gu, "")
     .trim();
   // role suffix: "Binance: Deposit", "Kraken: Hot Wallet", "Coinbase: Deposit"
   const colon = s.indexOf(":");
-  if (colon > 0) s = s.slice(0, colon);
+  if (colon >= 0) s = s.slice(0, colon);
   // instance numerals: "Binance 14", "Upbit 3", "Coinbase 10"
-  s = s.replace(/\s+\d+$/, "").trim().toLowerCase().replace(/\s+/g, " ");
+  s = s
+    .replace(/\s+\d+$/, "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
   return s.length ? s : null;
 }
 
@@ -74,8 +79,13 @@ export function attributeLabel(label: string | null | undefined): { entity: stri
  * Holder rows that are not people and not exchanges: pools, token contracts, proxies, multisigs, deployers, burn.
  * Excluded from the analysed supply (denominator). Same family of tags whichone found on `tgm/holders` free labels.
  */
-export const STRUCTURAL_TAG = /(liquidity pool|uniswap|pancake|sushi|curve|balancer|aerodrome|velodrome|raydium|orca|meteora|token contract|contract|proxy|multisig|multi-sig|safe|deployer|treasury|vesting|staking|bridge|burn|null address|dead|timelock|lp$|\blp\b|pool)/i;
-export const BURN_ADDRESSES = new Set(["0x0000000000000000000000000000000000000000", "0x000000000000000000000000000000000000dead", "0xdead000000000000000042069420694206942069"]);
+export const STRUCTURAL_TAG =
+  /(liquidity pool|uniswap|pancake|sushi|curve|balancer|aerodrome|velodrome|raydium|orca|meteora|token contract|contract|proxy|multisig|multi-sig|safe|deployer|treasury|vesting|staking|bridge|burn|null address|dead|timelock|lp$|\blp\b|pool)/i;
+export const BURN_ADDRESSES = new Set([
+  "0x0000000000000000000000000000000000000000",
+  "0x000000000000000000000000000000000000dead",
+  "0xdead000000000000000042069420694206942069",
+]);
 
 export function isStructural(address: string, label: string | null | undefined): boolean {
   if (BURN_ADDRESSES.has(address.toLowerCase())) return true;

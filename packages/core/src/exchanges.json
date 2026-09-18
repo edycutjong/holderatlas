@@ -4,9 +4,7 @@
     "upbit": {
       "country": "KR",
       "source": "Dunamu, Seoul; KRW-only spot market licensed under the Korean VASP regime (FIU registration 2021)",
-      "aliases": [
-        "upbit exchange"
-      ]
+      "aliases": ["upbit exchange"]
     },
     "bithumb": {
       "country": "KR",
@@ -39,25 +37,17 @@
     "gmo coin": {
       "country": "JP",
       "source": "GMO Coin, Tokyo; JFSA-registered",
-      "aliases": [
-        "gmocoin",
-        "gmo"
-      ]
+      "aliases": ["gmocoin", "gmo"]
     },
     "sbi vc trade": {
       "country": "JP",
       "source": "SBI VC Trade, Tokyo; JFSA-registered",
-      "aliases": [
-        "sbi vctrade",
-        "sbivc"
-      ]
+      "aliases": ["sbi vctrade", "sbivc"]
     },
     "dmm bitcoin": {
       "country": "JP",
       "source": "DMM Bitcoin, Tokyo; JFSA-registered (wound down 2025 into SBI VC Trade)",
-      "aliases": [
-        "dmm"
-      ]
+      "aliases": ["dmm"]
     },
     "zaif": {
       "country": "JP",
@@ -66,16 +56,12 @@
     "liquid": {
       "country": "JP",
       "source": "Liquid (Quoine), Tokyo; JFSA-registered; acquired by FTX Japan",
-      "aliases": [
-        "quoine"
-      ]
+      "aliases": ["quoine"]
     },
     "bittrade": {
       "country": "JP",
       "source": "BitTrade (ex-Huobi Japan), Tokyo; JFSA-registered",
-      "aliases": [
-        "huobi japan"
-      ]
+      "aliases": ["huobi japan"]
     },
     "indodax": {
       "country": "ID",
@@ -84,9 +70,7 @@
     "tokocrypto": {
       "country": "ID",
       "source": "Tokocrypto (Binance-backed), Jakarta; Bappebti/OJK-registered, IDR market",
-      "aliases": [
-        "toko crypto"
-      ]
+      "aliases": ["toko crypto"]
     },
     "pintu": {
       "country": "ID",
@@ -95,21 +79,12 @@
     "reku": {
       "country": "ID",
       "source": "Reku (ex-Rekeningku), Jakarta; Bappebti/OJK-registered",
-      "aliases": [
-        "rekeningku"
-      ]
+      "aliases": ["rekeningku"]
     },
     "coinbase": {
       "country": "US",
       "source": "Coinbase, US-listed (COIN); state MTLs + NYDFS BitLicense; the US retail on-ramp",
-      "aliases": [
-        "coinbase pro",
-        "coinbase prime",
-        "coinbase custody",
-        "coinbase commerce",
-        "coinbase wallet",
-        "coinbase international"
-      ]
+      "aliases": ["coinbase pro", "coinbase prime", "coinbase custody", "coinbase commerce", "coinbase wallet", "coinbase international"]
     },
     "kraken": {
       "country": "US",
@@ -126,10 +101,7 @@
     "binance us": {
       "country": "US",
       "source": "Binance.US, a separate US entity (BAM Trading) serving US residents only",
-      "aliases": [
-        "binanceus",
-        "binance.us"
-      ]
+      "aliases": ["binanceus", "binance.us"]
     },
     "okcoin": {
       "country": "US",
@@ -138,9 +110,7 @@
     "paxos": {
       "country": "US",
       "source": "Paxos Trust, New York; NYDFS-chartered (itBit)",
-      "aliases": [
-        "itbit"
-      ]
+      "aliases": ["itbit"]
     },
     "bittrex": {
       "country": "US",
@@ -149,24 +119,17 @@
     "cash app": {
       "country": "US",
       "source": "Block/Cash App, US retail bitcoin buys",
-      "aliases": [
-        "cashapp",
-        "square"
-      ]
+      "aliases": ["cashapp", "square"]
     },
     "swan": {
       "country": "US",
       "source": "Swan Bitcoin, US retail",
-      "aliases": [
-        "swan bitcoin"
-      ]
+      "aliases": ["swan bitcoin"]
     },
     "river": {
       "country": "US",
       "source": "River Financial, US retail",
-      "aliases": [
-        "river financial"
-      ]
+      "aliases": ["river financial"]
     },
     "strike": {
       "country": "US",
@@ -191,9 +154,7 @@
     "boerse stuttgart digital": {
       "country": "DE",
       "source": "Boerse Stuttgart Digital, Germany; BaFin",
-      "aliases": [
-        "bsdex"
-      ]
+      "aliases": ["bsdex"]
     },
     "coinhouse": {
       "country": "FR",
@@ -226,9 +187,7 @@
     "zonda": {
       "country": "PL",
       "source": "Zonda (ex-BitBay), Poland; PLN market",
-      "aliases": [
-        "bitbay"
-      ]
+      "aliases": ["bitbay"]
     },
     "coinmate": {
       "country": "CZ",
@@ -241,17 +200,12 @@
     "btc-alpha": {
       "country": "UA",
       "source": "BTC-Alpha, Ukraine",
-      "aliases": [
-        "btc alpha",
-        "btcalpha"
-      ]
+      "aliases": ["btc alpha", "btcalpha"]
     },
     "cex.io": {
       "country": "GB",
       "source": "CEX.IO, London; FCA-registered",
-      "aliases": [
-        "cex"
-      ]
+      "aliases": ["cex"]
     },
     "coinjar": {
       "country": "AU",
@@ -272,9 +226,7 @@
     "mercado bitcoin": {
       "country": "BR",
       "source": "Mercado Bitcoin, São Paulo; BRL market, BCB-authorised",
-      "aliases": [
-        "mercadobitcoin"
-      ]
+      "aliases": ["mercadobitcoin"]
     },
     "foxbit": {
       "country": "BR",
@@ -291,9 +243,7 @@
     "lemon cash": {
       "country": "AR",
       "source": "Lemon Cash, Buenos Aires; ARS market",
-      "aliases": [
-        "lemon"
-      ]
+      "aliases": ["lemon"]
     },
     "buenbit": {
       "country": "AR",
@@ -302,9 +252,7 @@
     "buda": {
       "country": "CL",
       "source": "Buda.com, Santiago; CLP/COP/PEN markets",
-      "aliases": [
-        "buda.com"
-      ]
+      "aliases": ["buda.com"]
     },
     "newton": {
       "country": "CA",
@@ -341,9 +289,7 @@
     "coinswitch": {
       "country": "IN",
       "source": "CoinSwitch, Bengaluru; INR market, FIU-IND registered",
-      "aliases": [
-        "coinswitch kuber"
-      ]
+      "aliases": ["coinswitch kuber"]
     },
     "zebpay": {
       "country": "IN",
@@ -356,10 +302,7 @@
     "orbix": {
       "country": "TH",
       "source": "Orbix (ex-Satang Pro, KBank), Bangkok; Thai SEC-licensed",
-      "aliases": [
-        "satang",
-        "satang pro"
-      ]
+      "aliases": ["satang", "satang pro"]
     },
     "zipmex": {
       "country": "TH",
@@ -368,10 +311,7 @@
     "coins.ph": {
       "country": "PH",
       "source": "Coins.ph, Manila; BSP-licensed VASP, PHP market",
-      "aliases": [
-        "coins ph",
-        "coins"
-      ]
+      "aliases": ["coins ph", "coins"]
     },
     "pdax": {
       "country": "PH",
@@ -396,17 +336,12 @@
     "btc markets": {
       "country": "AU",
       "source": "BTC Markets, Melbourne; AUSTRAC-registered",
-      "aliases": [
-        "btcmarkets"
-      ]
+      "aliases": ["btcmarkets"]
     },
     "max": {
       "country": "TW",
       "source": "MAX Exchange (MaiCoin), Taipei; TWD market",
-      "aliases": [
-        "max exchange",
-        "maicoin"
-      ]
+      "aliases": ["max exchange", "maicoin"]
     },
     "bitopro": {
       "country": "TW",
@@ -415,16 +350,12 @@
     "ace": {
       "country": "TW",
       "source": "ACE Exchange, Taipei; TWD market",
-      "aliases": [
-        "ace exchange"
-      ]
+      "aliases": ["ace exchange"]
     },
     "hashkey": {
       "country": "HK",
       "source": "HashKey Exchange, Hong Kong; SFC-licensed",
-      "aliases": [
-        "hashkey exchange"
-      ]
+      "aliases": ["hashkey exchange"]
     },
     "osl": {
       "country": "HK",
@@ -441,10 +372,7 @@
     "btcturk": {
       "country": "TR",
       "source": "BtcTurk, Istanbul; TRY market",
-      "aliases": [
-        "btc turk",
-        "btcturk pro"
-      ]
+      "aliases": ["btc turk", "btcturk pro"]
     },
     "bitci": {
       "country": "TR",
@@ -473,25 +401,17 @@
     "yellow card": {
       "country": "NG",
       "source": "Yellow Card, pan-African (Lagos ops)",
-      "aliases": [
-        "yellowcard"
-      ]
+      "aliases": ["yellowcard"]
     },
     "binance": {
       "country": "global",
       "source": "Binance global; no home market, serves ~180 countries — the mixing point of world retail; deliberately NOT a country",
-      "aliases": [
-        "binance charity",
-        "binance bridge",
-        "binance smart chain"
-      ]
+      "aliases": ["binance charity", "binance bridge", "binance smart chain"]
     },
     "okx": {
       "country": "global",
       "source": "OKX global (Seychelles); no home retail market",
-      "aliases": [
-        "okex"
-      ]
+      "aliases": ["okex"]
     },
     "bybit": {
       "country": "global",
@@ -504,17 +424,12 @@
     "gate": {
       "country": "global",
       "source": "Gate.io global (Cayman)",
-      "aliases": [
-        "gate.io",
-        "gateio"
-      ]
+      "aliases": ["gate.io", "gateio"]
     },
     "htx": {
       "country": "global",
       "source": "HTX (ex-Huobi) global",
-      "aliases": [
-        "huobi"
-      ]
+      "aliases": ["huobi"]
     },
     "mexc": {
       "country": "global",
@@ -527,10 +442,7 @@
     "crypto.com": {
       "country": "global",
       "source": "Crypto.com global (Singapore HQ, worldwide retail) — not a single market",
-      "aliases": [
-        "cryptocom",
-        "crypto com"
-      ]
+      "aliases": ["cryptocom", "crypto com"]
     },
     "bitfinex": {
       "country": "global",
@@ -571,23 +483,17 @@
     "xt": {
       "country": "global",
       "source": "XT.com global",
-      "aliases": [
-        "xt.com"
-      ]
+      "aliases": ["xt.com"]
     },
     "ascendex": {
       "country": "global",
       "source": "AscendEX global",
-      "aliases": [
-        "bitmax"
-      ]
+      "aliases": ["bitmax"]
     },
     "probit": {
       "country": "global",
       "source": "ProBit Global (the Korean entity is ProBit Korea)",
-      "aliases": [
-        "probit global"
-      ]
+      "aliases": ["probit global"]
     },
     "digifinex": {
       "country": "global",
@@ -640,16 +546,12 @@
     "bitpanda pro": {
       "country": "global",
       "source": "One Trading (ex-Bitpanda Pro) — institutional",
-      "aliases": [
-        "one trading"
-      ]
+      "aliases": ["one trading"]
     },
     "ftx": {
       "country": "global",
       "source": "FTX global (bankrupt 2022)",
-      "aliases": [
-        "ftx us"
-      ]
+      "aliases": ["ftx us"]
     },
     "bitmex": {
       "country": "global",
@@ -670,9 +572,7 @@
     "revolut": {
       "country": "GB",
       "source": "Revolut Ltd, London (EEA licence via Revolut Bank UAB, Lithuania); crypto users predominantly UK/EEA — treated as GB",
-      "aliases": [
-        "revolut ltd"
-      ]
+      "aliases": ["revolut ltd"]
     }
   },
   "countries": {

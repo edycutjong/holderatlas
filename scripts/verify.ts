@@ -61,7 +61,9 @@ for (const path of files) {
   if (problems.length === 0) {
     ok++;
     const out = recordedError ? `no-token ✔` : `${(replay!.attributable * 100).toFixed(1)}% · ${replay!.countries.map((c) => c.code).join(" ") || "—"}`;
-    console.log(`✔ ${label} ${replay!.hash.padEnd(14)} ${String(replay!.calls.length).padStart(3)} calls replayed · ${out} · recorded ${f.recordedAt.slice(0, 16)}Z · ${f.edge}`);
+    console.log(
+      `✔ ${label} ${replay!.hash.padEnd(14)} ${String(replay!.calls.length).padStart(3)} calls replayed · ${out} · recorded ${f.recordedAt.slice(0, 16)}Z · ${f.edge}`,
+    );
   } else {
     failures.push(path);
     console.log(`✖ ${label} ${problems.join("; ")}`);

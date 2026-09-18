@@ -7,7 +7,11 @@ export const FIXTURE_SET: FixtureSpec[] = [
   { input: "PEPE", chain: "ethereum", edge: "1 · the demo query: Binance-heavy custody, Coinbase withdrawals, Upbit/Bithumb/BTCTurk/Revolut custody" },
   { input: "WLFI", chain: "ethereum", edge: "2 · the KR contrast: Upbit's internal wallet holds half the analysed supply" },
   { input: "LINK", chain: "ethereum", edge: "3 · blue chip: custody spread across Upbit, Robinhood, Kraken, Bitpanda; one unlabelled mega-holder" },
-  { input: "USDC", chain: "ethereum", edge: "4 · stablecoin: Nansen's per-wallet transfer filter times out on the highest-volume token — the error path, honest" },
+  {
+    input: "USDC",
+    chain: "ethereum",
+    edge: "4 · stablecoin: Nansen's per-wallet transfer filter times out on the highest-volume token — the error path, honest",
+  },
   { input: "DEGEN", chain: "base", edge: "5 · base chain, Coinbase-heavy → US" },
   { input: "CAKE", chain: "bnb", edge: "6 · bnb chain: Binance custody = global grey" },
   { input: "ARB", chain: "arbitrum", edge: "7 · arbitrum: an L2 native token" },

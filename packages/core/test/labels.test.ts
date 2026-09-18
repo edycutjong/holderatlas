@@ -92,15 +92,30 @@ describe("exchanges.json — the curated table", () => {
 });
 
 describe("attributeLabel", () => {
-  it("regional exchange → entity + exchange + country", () => expect(attributeLabel("🏦 Upbit: Deposit")).toEqual({ entity: "upbit", exchange: "upbit", country: "KR" }));
-  it("global exchange → country 'global'", () => expect(attributeLabel("🏦 Binance 14")).toEqual({ entity: "binance", exchange: "binance", country: "global" }));
-  it("entity not in the table → exchange null, country null, entity kept", () => expect(attributeLabel("🏦 MetaMask: Gas Station Swap")).toEqual({ entity: "metamask", exchange: null, country: null }));
+  it("regional exchange → entity + exchange + country", () =>
+    expect(attributeLabel("🏦 Upbit: Deposit")).toEqual({ entity: "upbit", exchange: "upbit", country: "KR" }));
+  it("global exchange → country 'global'", () =>
+    expect(attributeLabel("🏦 Binance 14")).toEqual({ entity: "binance", exchange: "binance", country: "global" }));
+  it("entity not in the table → exchange null, country null, entity kept", () =>
+    expect(attributeLabel("🏦 MetaMask: Gas Station Swap")).toEqual({ entity: "metamask", exchange: null, country: null }));
   it("wealth tag → nothing", () => expect(attributeLabel("Token Billionaire")).toEqual({ entity: null, exchange: null, country: null }));
 });
 
 describe("isStructural — pools, contracts, burn", () => {
-  it.each(["Liquidity Pool", "UniswapV2", "Uniswap V2: PEPE", "Token Contract", "Proxy", "MultiSig", "Ziggy Token Deployer", "PancakeSwap V3 LP", "Aerodrome pool"])("%s", (l) => expect(isStructural("0x" + "1".repeat(40), l)).toBe(true));
-  it.each(["Token Millionaire", "High Balance", "PEPE Whale", "kiing.sol", "", null])("%s is a person (or unknown)", (l) => expect(isStructural("0x" + "1".repeat(40), l)).toBe(false));
+  it.each([
+    "Liquidity Pool",
+    "UniswapV2",
+    "Uniswap V2: PEPE",
+    "Token Contract",
+    "Proxy",
+    "MultiSig",
+    "Ziggy Token Deployer",
+    "PancakeSwap V3 LP",
+    "Aerodrome pool",
+  ])("%s", (l) => expect(isStructural("0x" + "1".repeat(40), l)).toBe(true));
+  it.each(["Token Millionaire", "High Balance", "PEPE Whale", "kiing.sol", "", null])("%s is a person (or unknown)", (l) =>
+    expect(isStructural("0x" + "1".repeat(40), l)).toBe(false),
+  );
   it("burn addresses regardless of label", () => {
     expect(isStructural("0x000000000000000000000000000000000000dEaD", "PEPE Whale")).toBe(true);
     expect(isStructural("0x0000000000000000000000000000000000000000", null)).toBe(true);

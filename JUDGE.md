@@ -1,0 +1,60 @@
+# Holder Atlas — for the judge
+
+*Mirrors https://holderatlas-edycutjong.vercel.app/judge (static, no login, no key, no setup).*
+
+**Type a token. One world map of where its holders actually are — and the honest share of supply the map covers.**
+
+Exchanges know where holders live; Nansen names the exchange on every transfer. Holder Atlas reads that entity label for
+the top holders of a token, maps each exchange to its country through a curated table shipped in the repo, and prints the
+one number that keeps the picture honest — as large as the map. Global exchanges are never placed. Grey is never hidden.
+
+## The 30-second path
+1. Open **https://holderatlas-edycutjong.vercel.app/?q=PEPE&chain=ethereum**. Rows stream in — each wallet gains its exchange
+   (🏦 Coinbase, 🏦 Upbit, 🏦 Binance…) — the map fills country by country, the bar re-sorts, the number counts to **40.4 %**:
+   US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40 s, cached ≈ 0 s.
+2. Click **WLFI** — the Korean contrast: Upbit holds half the analysed supply → **55 %**, KR 52. Then **DEGEN · base**: Coinbase → US 54.
+3. Click **Every Nansen call** — endpoint, body, credits, latency, cached or live, the fields used, the atlas hash. Click
+   **Save PNG** — the poster, 1600×900, rendered in the browser.
+4. Click **MEW · solana** — the honest unsupported state: exchanges visible, unnamed, 0 % placed, and the banner says which
+   Nansen field is missing.
+5. Open **https://holderatlas-edycutjong.vercel.app/api/atlas?q=PEPE&chain=ethereum** — the same atlas as JSON, same hash as the CLI prints.
+
+## Receipts
+| | |
+|---|---|
+| Hero query, live | `PEPE` on ethereum: 100 holders fetched · 12 custody + 40 people examined · **40.4 % placed · 117 credits · 110 calls · 57.3 s cold · 7 ms warm** · 2026-09-18 — output verbatim in [DEMO.md](DEMO.md) |
+| Benchmark, live | 4 tokens × 1 cold run: **cold p50 40.3 s · p95 59.0 s · warm p50 7 ms · mean 118 credits, max 121** per atlas; 0 failed calls in 444; every warm hash equals its cold hash — [docs/BENCH.md](docs/BENCH.md) |
+| Spike, live (day one) | 6 tokens: median **40.6 %** placed on the five EVM tokens (PEPE 40.6 · WLFI 55.9 · DEGEN 57.7 · LINK 3.5 · USDC 2.0); Solana 0 % because no ≤ 5-credit Nansen field names an exchange there — [docs/SCORING.md](docs/SCORING.md) |
+| Nansen endpoints | `search/general` · `tgm/holders` (all + `label_type: exchange`) · `tgm/transfers` (CEX-only, per wallet) · `transaction-with-token-transfer-lookup` · `profiler/address/related-wallets` — every placement is one of their response fields joined to [exchanges.json](packages/core/src/exchanges.json) (133 rows, one source each) |
+| Tests | **142 tests** (vitest): every label string seen live pinned to its key; the arithmetic property-tested (24,000 cases); offline replay = same hash; the USDC timeout path; the route boundary (10,000 generated garbage queries → 400, zero fetches); the key never reaches a client |
+| Determinism | 12 recorded atlases replay offline with the same hash, zero network, zero credits — including a recorded timeout, replayed as a timeout |
+| Clean clone → first map | measured after the first push (see README) |
+
+## Reproduce
+The real path — live Nansen calls, ~120 credits:
+```bash
+git clone https://github.com/edycutjong/holderatlas && cd holderatlas && npm install
+export NANSEN_API_KEY=nsn_...                              # your key from https://app.nansen.ai/api
+npm run holderatlas -- PEPE --chain ethereum --explain     # every wallet, every call, the number, the hash
+```
+CI / deterministic replay (not the product — a check that the attribution has not drifted):
+```bash
+npm run verify                       # 12/12 recorded atlases reproduced offline, no key, no network
+```
+
+## Honest limitations
+- **Solana cannot be named.** `transaction-with-token-transfer-lookup` is the only ≤ 5-credit field carrying an exchange entity
+  and it has no Solana support; holders and CEX transfers work there, so the custody share is shown with every exchange
+  "unnamed" and 0 % placed.
+- **Supply-weighted means whales decide.** LINK's analysed supply is 96 % one 2017 team wallet with no exchange trace → 4 %
+  placed. The wallet-weighted share is printed beside the number for exactly this reason.
+- **Countries are exchange jurisdictions, not people.** A Coinbase withdrawal is "US" the way a Coinbase account is; Kraken is
+  treated as US; Revolut as GB. Every row of the table says why, and global exchanges (Binance, OKX, Bybit, KuCoin…) are grey on purpose.
+- **Most recent exchange wins.** One lookup per wallet; a wallet that used Upbit last year and Binance last week is Binance.
+- **USDC-class tokens time out.** Nansen's per-wallet transfer filter times out on the highest-volume tokens; the engine probes,
+  shortens the window to 30 days, and skips the rest with a named reason rather than guessing.
+
+## Links
+- Live: https://holderatlas-edycutjong.vercel.app
+- Repo: https://github.com/edycutjong/holderatlas — [README](README.md), [DEMO.md](DEMO.md), [ARCHITECTURE.md](ARCHITECTURE.md), [docs/SCORING.md](docs/SCORING.md), [docs/BENCH.md](docs/BENCH.md), [docs/DX-REPORT.md](docs/DX-REPORT.md)
+- Built by [@edycutjong](https://x.com/edycutjong) for the [Nansen Meridian Buildathon](https://nansen.ai/campaigns/meridian-buildathon)

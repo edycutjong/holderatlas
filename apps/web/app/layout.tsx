@@ -4,14 +4,22 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? "https://holderatlas-edycutjong.vercel.app"),
   title: "Holder Atlas — where a token's holders actually are",
-  description: "Type a token. One world map of the countries its holders reach exchanges from, inferred from Nansen exchange entity labels, with the honest % of supply the map covers.",
+  description:
+    "Type a token. One world map of the countries its holders reach exchanges from, inferred from Nansen exchange entity labels, with the honest % of supply the map covers.",
   openGraph: {
     type: "website",
     url: "/",
     siteName: "Holder Atlas",
     title: "Holder Atlas",
     description: "Type a token. See where its holders actually are — and how much of the supply the map can honestly place.",
-    images: [{ url: "/api/og?q=PEPE&chain=ethereum&v=1", width: 1200, height: 675, alt: "Holder Atlas poster for PEPE: 40% of analysed supply placed on a country — US, KR, GB, TR, NL — with global exchanges and untraced wallets in grey" }],
+    images: [
+      {
+        url: "/api/og?q=PEPE&chain=ethereum&v=1",
+        width: 1200,
+        height: 675,
+        alt: "Holder Atlas poster for PEPE: 40% of analysed supply placed on a country — US, KR, GB, TR, NL — with global exchanges and untraced wallets in grey",
+      },
+    ],
   },
   twitter: { card: "summary_large_image", creator: "@edycutjong", title: "Holder Atlas", description: "Type a token. See where its holders actually are." },
   authors: [{ name: "Edy Cu Tjong", url: "https://github.com/edycutjong" }],

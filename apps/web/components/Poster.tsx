@@ -29,7 +29,25 @@ export const POSTER_H = 900;
 const SANS = "Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 const MONO = "ui-monospace, SFMono-Regular, Menlo, monospace";
 
-export type PosterData = Pick<Atlas, "token" | "chain" | "naming" | "countries" | "global" | "otherEntity" | "untraced" | "unnamed" | "errors" | "attributable" | "attributableByWallets" | "custodyShare" | "structuralShare" | "examined" | "holdersFetched" | "coverage"> & {
+export type PosterData = Pick<
+  Atlas,
+  | "token"
+  | "chain"
+  | "naming"
+  | "countries"
+  | "global"
+  | "otherEntity"
+  | "untraced"
+  | "unnamed"
+  | "errors"
+  | "attributable"
+  | "attributableByWallets"
+  | "custodyShare"
+  | "structuralShare"
+  | "examined"
+  | "holdersFetched"
+  | "coverage"
+> & {
   asOf?: string;
   credits?: number;
   calls?: number;
@@ -41,15 +59,31 @@ export type PosterData = Pick<Atlas, "token" | "chain" | "naming" | "countries" 
 export const pct = (x: number, d = 1) => `${(x * 100).toFixed(d)}%`;
 export const bubbleR = (share: number) => Math.min(96, 10 + 72 * Math.sqrt(Math.max(0, share)));
 
-export type BarRow = { key: string; label: string; sub: string; share: number; wallets: number; kind: "country" | "global" | "other" | "untraced" | "unnamed" | "error" };
+export type BarRow = {
+  key: string;
+  label: string;
+  sub: string;
+  share: number;
+  wallets: number;
+  kind: "country" | "global" | "other" | "untraced" | "unnamed" | "error";
+};
 
 /** The ranked rows of the bar: countries (top 8, rest folded), then every grey bucket that has wallets. */
 export function barRows(d: PosterData): BarRow[] {
   const rows: BarRow[] = [];
   const cs = d.countries.slice(0, 8);
-  for (const c of cs) rows.push({ key: c.code, label: c.code, sub: `${countryName(c.code)} · ${c.exchanges.join(", ")}`, share: c.share, wallets: c.wallets, kind: "country" });
+  for (const c of cs)
+    rows.push({ key: c.code, label: c.code, sub: `${countryName(c.code)} · ${c.exchanges.join(", ")}`, share: c.share, wallets: c.wallets, kind: "country" });
   const rest = d.countries.slice(8);
-  if (rest.length) rows.push({ key: "other-countries", label: `+${rest.length}`, sub: rest.map((c) => c.code).join(" "), share: rest.reduce((n, c) => n + c.share, 0), wallets: rest.reduce((n, c) => n + c.wallets, 0), kind: "country" });
+  if (rest.length)
+    rows.push({
+      key: "other-countries",
+      label: `+${rest.length}`,
+      sub: rest.map((c) => c.code).join(" "),
+      share: rest.reduce((n, c) => n + c.share, 0),
+      wallets: rest.reduce((n, c) => n + c.wallets, 0),
+      kind: "country",
+    });
   const b = (key: string, label: string, sub: string, r: BucketRow, kind: BarRow["kind"]) => {
     if (r.wallets) rows.push({ key, label, sub, share: r.share, wallets: r.wallets, kind });
   };
@@ -100,10 +134,21 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
   const number = pct(d.attributable, 1);
   const [intPart, fracPart] = number.replace("%", "").split(".");
   const analysed = d.examined.custody + d.examined.human;
-  const caption = [`${analysed} of ${d.holdersFetched} top holders analysed (${pct(d.coverage, 0)} of their supply)`, `exchange custody ${pct(d.custodyShare, 0)}`, `pools/contracts excluded ${pct(d.structuralShare, 0)}`]
+  const caption = [
+    `${analysed} of ${d.holdersFetched} top holders analysed (${pct(d.coverage, 0)} of their supply)`,
+    `exchange custody ${pct(d.custodyShare, 0)}`,
+    `pools/contracts excluded ${pct(d.structuralShare, 0)}`,
+  ]
     .filter(Boolean)
     .join("  ·  ");
-  const footer = [d.asOf ? `as of ${fmtAsOf(d.asOf)}` : null, d.calls != null ? `${d.calls} Nansen calls` : null, d.credits != null ? `${d.credits} credits` : null, d.hash ? `atlas ${d.hash}` : null].filter(Boolean).join("  ·  ");
+  const footer = [
+    d.asOf ? `as of ${fmtAsOf(d.asOf)}` : null,
+    d.calls != null ? `${d.calls} Nansen calls` : null,
+    d.credits != null ? `${d.credits} credits` : null,
+    d.hash ? `atlas ${d.hash}` : null,
+  ]
+    .filter(Boolean)
+    .join("  ·  ");
   const barX = 1200,
     barW = 250,
     rowH = 46,
@@ -112,7 +157,12 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
   const streaming = d.progress && d.progress.done < d.progress.total;
   return (
     <svg id={id} viewBox={`0 0 ${POSTER_W} ${POSTER_H}`} width="100%" role="img" aria-labelledby={`${id}-title`} fontFamily={SANS} style={{ display: "block" }}>
-      <title id={`${id}-title`}>{`${d.token.symbol} on ${d.chain}: ${number} of analysed supply placed on a country — ${rows.filter((r) => r.kind === "country").map((r) => `${r.label} ${pct(r.share, 0)}`).join(", ") || "none"}`}</title>
+      <title id={`${id}-title`}>{`${d.token.symbol} on ${d.chain}: ${number} of analysed supply placed on a country — ${
+        rows
+          .filter((r) => r.kind === "country")
+          .map((r) => `${r.label} ${pct(r.share, 0)}`)
+          .join(", ") || "none"
+      }`}</title>
       <defs>
         <pattern id={`${id}-hatch`} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="8" height="8" fill={C.greyDim} />
@@ -191,7 +241,14 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
                 </>
               ) : (
                 <>
-                  <line x1={at[0] + r * 0.7} y1={at[1] + r * 0.7 * Math.sign(ly - at[1] || 1) * (Math.abs(ly - at[1]) > r ? 1 : 0)} x2={lx - 4} y2={ly - 6} stroke={C.text2} strokeWidth="1.5" />
+                  <line
+                    x1={at[0] + r * 0.7}
+                    y1={at[1] + r * 0.7 * Math.sign(ly - at[1] || 1) * (Math.abs(ly - at[1]) > r ? 1 : 0)}
+                    x2={lx - 4}
+                    y2={ly - 6}
+                    stroke={C.text2}
+                    strokeWidth="1.5"
+                  />
                   <text x={lx} y={ly} fontSize="18" fontWeight="700" fill={C.text} stroke={C.surface} strokeWidth="4" paintOrder="stroke">
                     {c.code} {pct(c.share, c.share >= 0.1 ? 0 : 1)}
                   </text>
@@ -221,7 +278,16 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
       {rows.map((r, i) => {
         const y = barTop + i * rowH;
         const w = Math.max(4, (r.share / barScale) * barW);
-        const fill = r.kind === "country" ? C.real : r.kind === "unnamed" ? `url(#${id}-hatch)` : r.kind === "untraced" ? C.greyDim : r.kind === "error" ? "transparent" : C.grey;
+        const fill =
+          r.kind === "country"
+            ? C.real
+            : r.kind === "unnamed"
+              ? `url(#${id}-hatch)`
+              : r.kind === "untraced"
+                ? C.greyDim
+                : r.kind === "error"
+                  ? "transparent"
+                  : C.grey;
         return (
           <g key={r.key} className={`bar-row ${r.kind}`} data-key={r.key}>
             <text x={barX - 140} y={y + 16} fontSize="18" fontWeight="800" fill={r.kind === "country" ? C.text : C.text2}>
@@ -231,7 +297,12 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
               {r.sub.length > 46 ? r.sub.slice(0, 45) + "…" : r.sub}
             </text>
             {/* ≤ 22 px thick, rounded data-end, square at the baseline; 2 px surface gap = the row spacing */}
-            <path d={`M${barX} ${y + 2}h${Math.max(0, w - 4)}a4 4 0 0 1 4 4v14a4 4 0 0 1 -4 4h${-Math.max(0, w - 4)}z`} fill={fill} stroke={r.kind === "error" ? C.red : r.kind === "untraced" ? C.border2 : "none"} strokeWidth="1.5" />
+            <path
+              d={`M${barX} ${y + 2}h${Math.max(0, w - 4)}a4 4 0 0 1 4 4v14a4 4 0 0 1 -4 4h${-Math.max(0, w - 4)}z`}
+              fill={fill}
+              stroke={r.kind === "error" ? C.red : r.kind === "untraced" ? C.border2 : "none"}
+              strokeWidth="1.5"
+            />
             <text x={barX + w + 10} y={y + 18} fontSize="18" fontWeight="700" fill={C.text} style={{ fontVariantNumeric: "tabular-nums" }}>
               {pct(r.share, 1)}
               <tspan fill={C.muted} fontWeight="500" fontSize="14">
@@ -239,9 +310,7 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
                 {r.wallets} w
               </tspan>
             </text>
-            {interactive ? (
-              <title>{`${r.label}: ${pct(r.share)} · ${r.wallets} wallets · ${r.sub}`}</title>
-            ) : null}
+            {interactive ? <title>{`${r.label}: ${pct(r.share)} · ${r.wallets} wallets · ${r.sub}`}</title> : null}
           </g>
         );
       })}
@@ -259,5 +328,27 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
 
 /** Atlas → the poster's data (plus overrides while streaming). Lives here, not in the client component, so /api/og can call it. */
 export function toPoster(a: Atlas, extra: Partial<PosterData> = {}): PosterData {
-  return { token: a.token, chain: a.chain, naming: a.naming, countries: a.countries, global: a.global, otherEntity: a.otherEntity, untraced: a.untraced, unnamed: a.unnamed, errors: a.errors, attributable: a.attributable, attributableByWallets: a.attributableByWallets, custodyShare: a.custodyShare, structuralShare: a.structuralShare, examined: a.examined, holdersFetched: a.holdersFetched, coverage: a.coverage, asOf: a.asOf, credits: a.credits, calls: a.calls.length, hash: a.hash, ...extra };
+  return {
+    token: a.token,
+    chain: a.chain,
+    naming: a.naming,
+    countries: a.countries,
+    global: a.global,
+    otherEntity: a.otherEntity,
+    untraced: a.untraced,
+    unnamed: a.unnamed,
+    errors: a.errors,
+    attributable: a.attributable,
+    attributableByWallets: a.attributableByWallets,
+    custodyShare: a.custodyShare,
+    structuralShare: a.structuralShare,
+    examined: a.examined,
+    holdersFetched: a.holdersFetched,
+    coverage: a.coverage,
+    asOf: a.asOf,
+    credits: a.credits,
+    calls: a.calls.length,
+    hash: a.hash,
+    ...extra,
+  };
 }

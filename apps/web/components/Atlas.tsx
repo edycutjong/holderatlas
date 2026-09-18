@@ -84,25 +84,50 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
           const line = buf.slice(0, nl);
           buf = buf.slice(nl + 1);
           if (!line.trim()) continue;
-          const e = JSON.parse(line) as AtlasEvent | { type: "error"; message: string; candidates?: Candidate[] } | { type: "asOf"; asOf: string | null; degraded: boolean };
+          const e = JSON.parse(line) as
+            AtlasEvent | { type: "error"; message: string; candidates?: Candidate[] } | { type: "asOf"; asOf: string | null; degraded: boolean };
           if (e.type === "token") {
             set({ data: { ...blank().data, token: e.token, chain: e.token.chain, naming: e.token.chain !== "solana" }, candidates: e.candidates });
             setStatus(`${e.token.symbol} on ${e.token.chain} — fetching the top holders…`);
           } else if (e.type === "holders") {
-            set({ data: { ...cur!.data, holdersFetched: e.fetched, examined: e.examined, progress: { done: 0, total: e.examined.custody + e.examined.human } } });
-            setStatus(`${e.fetched} holders: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts — naming ${e.examined.custody + e.examined.human} of them…`);
+            set({
+              data: { ...cur!.data, holdersFetched: e.fetched, examined: e.examined, progress: { done: 0, total: e.examined.custody + e.examined.human } },
+            });
+            setStatus(
+              `${e.fetched} holders: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts — naming ${e.examined.custody + e.examined.human} of them…`,
+            );
           } else if (e.type === "wallet") {
             const rows = [...cur!.rows, e.row];
             set({
               rows,
-              data: { ...cur!.data, countries: e.partial.countries, global: e.partial.global, untraced: e.partial.untraced, unnamed: e.partial.unnamed, otherEntity: e.partial.otherEntity, errors: e.partial.errors, attributable: e.partial.attributable, attributableByWallets: e.partial.attributableByWallets, progress: { done: e.done, total: e.total } },
+              data: {
+                ...cur!.data,
+                countries: e.partial.countries,
+                global: e.partial.global,
+                untraced: e.partial.untraced,
+                unnamed: e.partial.unnamed,
+                otherEntity: e.partial.otherEntity,
+                errors: e.partial.errors,
+                attributable: e.partial.attributable,
+                attributableByWallets: e.partial.attributableByWallets,
+                progress: { done: e.done, total: e.total },
+              },
             });
             setStatus(`${e.done}/${e.total} wallets · ${pct(e.partial.attributable)} placed so far`);
           } else if (e.type === "reclass") {
             set({ rows: cur!.rows.map((r) => (r.address === e.row.address ? e.row : r)) });
           } else if (e.type === "atlas") {
             const a = e.atlas;
-            set({ data: toPoster(a), rows: a.rows, calls: a.calls, credits: a.credits, ms: a.ms, hash: a.hash, warnings: a.warnings, candidates: a.candidates });
+            set({
+              data: toPoster(a),
+              rows: a.rows,
+              calls: a.calls,
+              credits: a.credits,
+              ms: a.ms,
+              hash: a.hash,
+              warnings: a.warnings,
+              candidates: a.candidates,
+            });
           } else if (e.type === "asOf") {
             set({ asOf: e.asOf, degraded: e.degraded });
           } else if (e.type === "error") {
@@ -121,7 +146,9 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
       }
       setPhase("done");
       const c = cur as Live;
-      setStatus(`${c.credits} credits · ${c.calls.length} calls${c.asOf ? ` · as of ${c.asOf.slice(11, 16)} UTC` : ""} · ${(c.ms / 1000).toFixed(1)} s · atlas ${c.hash}`);
+      setStatus(
+        `${c.credits} credits · ${c.calls.length} calls${c.asOf ? ` · as of ${c.asOf.slice(11, 16)} UTC` : ""} · ${(c.ms / 1000).toFixed(1)} s · atlas ${c.hash}`,
+      );
     } catch (err) {
       if ((err as Error).name === "AbortError") return;
       setError({ message: (err as Error).message });
@@ -130,8 +157,11 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
     }
   }, []);
 
+  // an initial query (permalink or ?q=) starts the stream after mount; run() only sets state from inside the response loop
   useEffect(() => {
-    if (initialQuery) void run(initialQuery, initialChain && (CHAINS as readonly string[]).includes(initialChain) ? initialChain : "auto");
+    if (!initialQuery) return;
+    const t = setTimeout(() => void run(initialQuery, initialChain && (CHAINS as readonly string[]).includes(initialChain) ? initialChain : "auto"), 0);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -182,7 +212,15 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
             void run(q, chain);
           }}
         >
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="a ticker like PEPE — or an address with its chain" aria-label="token ticker or address" maxLength={44} autoFocus spellCheck={false} />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="a ticker like PEPE — or an address with its chain"
+            aria-label="token ticker or address"
+            maxLength={44}
+            autoFocus
+            spellCheck={false}
+          />
           <select value={chain} onChange={(e) => setChain(e.target.value)} aria-label="chain">
             <option value="auto">any chain</option>
             {CHAINS.map((c) => (
@@ -229,18 +267,22 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
       ) : null}
       {live?.degraded ? (
         <div className="banner warn">
-          Today&rsquo;s live budget is used up — this is a replay of a recorded run. <small>Same engine, same responses, same hash; recorded {live.asOf?.slice(0, 10)}.</small>
+          Today&rsquo;s live budget is used up — this is a replay of a recorded run.{" "}
+          <small>Same engine, same responses, same hash; recorded {live.asOf?.slice(0, 10)}.</small>
         </div>
       ) : null}
       {live && phase === "done" && !live.data.naming ? (
         <div className="banner warn">
           {live.data.chain}: exchanges are visible but cannot be named on this API path — the custody share is shown, nothing is placed.
-          <small>Nansen&rsquo;s transaction-with-token-transfer-lookup, the only ≤ 5-credit field carrying an exchange entity, has no {live.data.chain} support.</small>
+          <small>
+            Nansen&rsquo;s transaction-with-token-transfer-lookup, the only ≤ 5-credit field carrying an exchange entity, has no {live.data.chain} support.
+          </small>
         </div>
       ) : null}
       {live && phase === "done" && live.data.naming && live.data.countries.length === 0 ? (
         <div className="banner warn">
-          No examined holder reaches a regional exchange — every traced wallet touched a global one. <small>The map is honest at 0 %; the bar shows where the supply sits instead.</small>
+          No examined holder reaches a regional exchange — every traced wallet touched a global one.{" "}
+          <small>The map is honest at 0 %; the bar shows where the supply sits instead.</small>
         </div>
       ) : null}
 
@@ -275,15 +317,15 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
               {live.data.token.address}
             </span>
           </div>
-          {live.warnings.filter((w) => !w.startsWith("Today")).map((w) => (
-            <p key={w} className="candidates">
-              ⚠ {w}
-            </p>
-          ))}
+          {live.warnings
+            .filter((w) => !w.startsWith("Today"))
+            .map((w) => (
+              <p key={w} className="candidates">
+                ⚠ {w}
+              </p>
+            ))}
           <div className="rows-head">
-            <h2>
-              {live.rows.filter((r) => r.kind !== "structural").length} wallets, one exchange each
-            </h2>
+            <h2>{live.rows.filter((r) => r.kind !== "structural").length} wallets, one exchange each</h2>
             <span>custody first, then people by supply · most recent exchange wins</span>
           </div>
           <div className="rows" aria-live="polite">
@@ -304,7 +346,15 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
         </>
       ) : null}
 
-      <Drawer calls={live?.calls ?? []} open={drawer} onClose={() => setDrawer(false)} credits={live?.credits ?? 0} ms={live?.ms ?? 0} asOf={live?.asOf} hash={live?.hash} />
+      <Drawer
+        calls={live?.calls ?? []}
+        open={drawer}
+        onClose={() => setDrawer(false)}
+        credits={live?.credits ?? 0}
+        ms={live?.ms ?? 0}
+        asOf={live?.asOf}
+        hash={live?.hash}
+      />
       {toast ? <div className="toast">{toast}</div> : null}
     </main>
   );
@@ -334,7 +384,12 @@ function Row({ r }: { r: WalletRow }) {
         {r.address.slice(0, 8)}…{r.address.slice(-4)} {r.label ? <span style={{ color: "var(--muted)" }}>· {r.label.slice(0, 28)}</span> : null}
       </span>
       <span>
-        {r.entityLabel ? <span className="exch" title={r.entityLabel}>{cleanLabel(r.entityLabel)}</span> : null} {where}
+        {r.entityLabel ? (
+          <span className="exch" title={r.entityLabel}>
+            {cleanLabel(r.entityLabel)}
+          </span>
+        ) : null}{" "}
+        {where}
       </span>
       <span className="share">{pct(r.share, 2)}</span>
     </div>
@@ -344,13 +399,30 @@ function Row({ r }: { r: WalletRow }) {
 function cleanLabel(l: string) {
   return l
     .replace(/\[0x[0-9a-f]+\]/gi, "")
-    .replace(/[​-‏﻿]/g, "")
+    .replace(/[\u200B-\u200F\uFEFF]/g, "")
     .trim();
 }
 
 function blank(): Live {
   return {
-    data: { token: { symbol: "…", name: "", chain: "ethereum", address: "", marketCap: null }, chain: "ethereum", naming: true, countries: [], global: emptyBucket, otherEntity: emptyBucket, untraced: emptyBucket, unnamed: emptyBucket, errors: emptyBucket, attributable: 0, attributableByWallets: 0, custodyShare: 0, structuralShare: 0, examined: { custody: 0, human: 0 }, holdersFetched: 0, coverage: 0 },
+    data: {
+      token: { symbol: "…", name: "", chain: "ethereum", address: "", marketCap: null },
+      chain: "ethereum",
+      naming: true,
+      countries: [],
+      global: emptyBucket,
+      otherEntity: emptyBucket,
+      untraced: emptyBucket,
+      unnamed: emptyBucket,
+      errors: emptyBucket,
+      attributable: 0,
+      attributableByWallets: 0,
+      custodyShare: 0,
+      structuralShare: 0,
+      examined: { custody: 0, human: 0 },
+      holdersFetched: 0,
+      coverage: 0,
+    },
     rows: [],
     calls: [],
     credits: 0,
@@ -362,4 +434,3 @@ function blank(): Live {
     candidates: [],
   };
 }
-

@@ -39,7 +39,8 @@ export async function GET(req: NextRequest) {
       if (!degraded) recordSpend(r.atlas.credits);
       return Response.json({ ...r.atlas, asOf: r.oldestHit ?? r.atlas.asOf, degraded }, { headers: { "cache-control": "no-store" } });
     } catch (e) {
-      if (e instanceof AtlasError) return Response.json({ error: e.message, code: e.code, candidates: e.candidates }, { status: 404, headers: { "cache-control": "no-store" } });
+      if (e instanceof AtlasError)
+        return Response.json({ error: e.message, code: e.code, candidates: e.candidates }, { status: 404, headers: { "cache-control": "no-store" } });
       return Response.json({ error: (e as Error).message }, { status: 502 });
     }
   }
@@ -50,7 +51,9 @@ export async function GET(req: NextRequest) {
       // The browser aborts this fetch when the user submits a new token mid-stream; after that every enqueue throws,
       // so a closed stream turns `send` into a no-op and the atlas simply finishes unobserved.
       let closed = false;
-      const send = (e: AtlasEvent | { type: "error"; message: string; code?: string; candidates?: unknown[] } | { type: "asOf"; asOf: string | null; degraded: boolean }) => {
+      const send = (
+        e: AtlasEvent | { type: "error"; message: string; code?: string; candidates?: unknown[] } | { type: "asOf"; asOf: string | null; degraded: boolean },
+      ) => {
         if (closed) return;
         try {
           controller.enqueue(enc.encode(JSON.stringify(e) + "\n"));

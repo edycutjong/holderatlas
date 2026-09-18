@@ -67,7 +67,8 @@ export function resetGuard(): void {
 }
 
 export const BUDGET_MESSAGE = "Today's live Nansen budget is used up — this is a replay of a recorded run.";
-export const NO_FIXTURE_MESSAGE = "Today's live Nansen budget is used up and this token has no recorded run. Try PEPE, WLFI, DEGEN or MOG, or come back tomorrow.";
+export const NO_FIXTURE_MESSAGE =
+  "Today's live Nansen budget is used up and this token has no recorded run. Try PEPE, WLFI, DEGEN or MOG, or come back tomorrow.";
 
 export function fixturesDir(): string | undefined {
   for (const c of [join(process.cwd(), "fixtures"), join(process.cwd(), "..", "..", "fixtures")]) if (existsSync(c)) return c;
@@ -88,7 +89,11 @@ export function fixturePath(q: string, chain?: string): string | undefined {
  * The offline fallback: the fixture's recorded responses under the same engine, same clock, so the atlas is the one the
  * live run produced. Returns undefined when no fixture matches the input + chain.
  */
-export async function replayFixture(q: string, chain?: string, opts: Omit<AtlasOptions, "chain" | "now"> = {}): Promise<{ atlas: Atlas; oldestHit: string } | undefined> {
+export async function replayFixture(
+  q: string,
+  chain?: string,
+  opts: Omit<AtlasOptions, "chain" | "now"> = {},
+): Promise<{ atlas: Atlas; oldestHit: string } | undefined> {
   const path = fixturePath(q, chain);
   if (!path) return undefined;
   const f = readFixture(path);

@@ -44,10 +44,17 @@ for (const f of set) {
     if (warm.hash !== cold.hash) row.hashStable = false;
     if (hash && hash !== cold.hash) row.hashStable = false; // live data can legitimately move between runs; reported, not asserted
     hash = cold.hash;
-    row.result = `${(cold.attributable * 100).toFixed(1)} % · ${cold.countries.slice(0, 3).map((c) => `${c.code} ${(c.share * 100).toFixed(0)}`).join(" ") || "—"}`;
+    row.result = `${(cold.attributable * 100).toFixed(1)} % · ${
+      cold.countries
+        .slice(0, 3)
+        .map((c) => `${c.code} ${(c.share * 100).toFixed(0)}`)
+        .join(" ") || "—"
+    }`;
   }
   rows.push(row);
-  console.error(`${row.input.padEnd(24)} cold p50 ${pct(row.coldMs, 50)} ms · warm p50 ${pct(row.warmMs, 50)} ms · ${pct(row.credits, 50)} cr · ${row.result}${row.failed ? ` · ${row.failed} failed calls` : ""}${row.hashStable ? "" : " · hash moved between runs"}`);
+  console.error(
+    `${row.input.padEnd(24)} cold p50 ${pct(row.coldMs, 50)} ms · warm p50 ${pct(row.warmMs, 50)} ms · ${pct(row.credits, 50)} cr · ${row.result}${row.failed ? ` · ${row.failed} failed calls` : ""}${row.hashStable ? "" : " · hash moved between runs"}`,
+  );
 }
 
 const allCold = rows.flatMap((r) => r.coldMs),
@@ -55,11 +62,15 @@ const allCold = rows.flatMap((r) => r.coldMs),
   allCr = rows.flatMap((r) => r.credits),
   allCalls = rows.flatMap((r) => r.calls);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-console.log(`## Benchmark — ${new Date().toISOString().slice(0, 16)}Z · ${set.length} tokens × ${runs} cold run${runs > 1 ? "s" : ""} · live Nansen API · defaults (12 custody + 40 human wallets, 4-wide lookup pool, 5 rps)\n`);
+console.log(
+  `## Benchmark — ${new Date().toISOString().slice(0, 16)}Z · ${set.length} tokens × ${runs} cold run${runs > 1 ? "s" : ""} · live Nansen API · defaults (12 custody + 40 human wallets, 4-wide lookup pool, 5 rps)\n`,
+);
 console.log(`| token | cold p50 | cold p95 | warm p50 | credits | live calls | failed | result | warm hash = cold |`);
 console.log(`|---|---|---|---|---|---|---|---|---|`);
 for (const r of rows)
-  console.log(`| ${r.input} | ${(pct(r.coldMs, 50) / 1000).toFixed(1)} s | ${(pct(r.coldMs, 95) / 1000).toFixed(1)} s | ${pct(r.warmMs, 50)} ms | ${pct(r.credits, 50)} | ${pct(r.calls, 50)} | ${r.failed} | ${r.result} | ${r.hashStable ? "yes" : "no"} |`);
+  console.log(
+    `| ${r.input} | ${(pct(r.coldMs, 50) / 1000).toFixed(1)} s | ${(pct(r.coldMs, 95) / 1000).toFixed(1)} s | ${pct(r.warmMs, 50)} ms | ${pct(r.credits, 50)} | ${pct(r.calls, 50)} | ${r.failed} | ${r.result} | ${r.hashStable ? "yes" : "no"} |`,
+  );
 console.log(
   `\n**All tokens:** cold p50 **${(pct(allCold, 50) / 1000).toFixed(1)} s** · p95 **${(pct(allCold, 95) / 1000).toFixed(1)} s** · warm p50 **${pct(allWarm, 50)} ms** · mean **${mean(allCr).toFixed(1)} credits** and **${mean(allCalls).toFixed(1)} live calls** per atlas · max ${Math.max(...allCr)} credits · ${rows.reduce((n, r) => n + r.failed, 0)} failed calls in ${allCalls.reduce((a, b) => a + b, 0)} · this run spent ${liveCredits} credits over ${liveCalls} live calls.`,
 );

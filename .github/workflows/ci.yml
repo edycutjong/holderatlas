@@ -1,0 +1,128 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ── STAGE 1: Quality (parallel with Stage 2) ────────────────
+  quality:
+    name: "Stage 1 · Quality"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ${{ github.event_name == 'push' && fromJSON('[20, 22, 24]') || fromJSON('[20]') }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the readiness check scans the whole git history for keys
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      - run: npm ci
+      - name: Format check (Prettier)
+        run: npm run format:check
+      - name: Lint (ESLint)
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit + property + boundary + guard tests with coverage (no key, no network)
+        run: npm run test:coverage
+      - name: Offline replay of 12 recorded atlases (no key, no network)
+        run: npm run verify
+      - name: Submission readiness (README claims vs tree, kitchen/secret scan)
+        run: npm run check
+      - uses: actions/upload-artifact@v7
+        if: matrix.node-version == 20
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  # ── STAGE 2: Security (parallel with Stage 1) ───────────────
+  secret-scan:
+    name: "Stage 2 · Secret Scanning"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: TruffleHog (verified secrets only)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+  dependency-audit:
+    name: "Stage 2 · Dependency Audit"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - name: npm audit (production deps, high + critical)
+        run: npm run audit
+        continue-on-error: true
+
+  # ── STAGE 3: Build ──────────────────────────────────────────
+  build:
+    name: "Stage 3 · Build Verification"
+    needs: [quality]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - name: Next.js production build (no API key — nothing is fetched at build time)
+        run: npm run build
+      - name: Bundle size
+        run: |
+          TOTAL=$(du -sk apps/web/.next/static | cut -f1)
+          echo "static assets: ${TOTAL}KB"
+          if [ "$TOTAL" -gt 2500 ]; then echo "::error::bundle ${TOTAL}KB > 2500KB"; exit 1; fi
+
+  # ── STAGE 4: E2E (built app, no key — the honest no-key path) ──
+  e2e:
+    name: "Stage 4 · E2E smoke"
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+          cache: "npm"
+      - run: npm ci
+      - run: npm run build
+      - name: Start and probe every route without a key
+        run: |
+          (npm run start -- -p 3100 > server.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf http://localhost:3100/ > /dev/null && break; sleep 1; done
+          set -e
+          for p in / /judge /t/ethereum/0x6982508145454ce325ddbe47a25d4ec3d2311933 "/api/og?q=PEPE&chain=ethereum"; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3100$p"); echo "$p → $code"; [ "$code" = "200" ]
+          done
+          code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3100/api/atlas?q=PEPE"); echo "/api/atlas (no key) → $code"; [ "$code" = "500" ]
+          code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:3100/api/atlas?q=%3Cscript%3E"); echo "/api/atlas (garbage) → $code"; [ "$code" = "400" ]
+          ! grep -q "nsn_" server.log
+
+  # ── STAGE 5: Deploy gate (main only) ────────────────────────
+  deploy-gate:
+    name: "Stage 5 · Deploy Gate"
+    needs: [build, e2e, secret-scan, dependency-audit]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - run: echo "All gates passed — production deploys are made with 'vercel deploy --prod' from a clean main."

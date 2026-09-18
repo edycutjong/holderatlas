@@ -59,7 +59,13 @@ describe("partition — holders → custody / human / structural", () => {
     expect(p[0].supply).toBe(1000);
   });
   it("rows without an address are dropped; negative amounts clamp to 0; addresses lower-cased", () => {
-    const p = partition([{ address: null, token_amount: 5 }, { address: "0xABC", token_amount: -3 }] as never, new Set());
+    const p = partition(
+      [
+        { address: null, token_amount: 5 },
+        { address: "0xABC", token_amount: -3 },
+      ] as never,
+      new Set(),
+    );
     expect(p).toEqual([{ address: "0xabc", label: null, supply: 0, kind: "human" }]);
   });
 });
@@ -67,13 +73,34 @@ describe("partition — holders → custody / human / structural", () => {
 describe("exchangeLabelFor — which side of the transfer names the exchange", () => {
   const w = addr(1);
   it("human withdrawal: the from side", () => {
-    expect(exchangeLabelFor([{ from_address: COINBASE, from_address_label: "🤖 🏦 Coinbase", to_address: w, to_address_label: null, token_address: PEPE }], w, "human", PEPE)).toBe("🤖 🏦 Coinbase");
+    expect(
+      exchangeLabelFor(
+        [{ from_address: COINBASE, from_address_label: "🤖 🏦 Coinbase", to_address: w, to_address_label: null, token_address: PEPE }],
+        w,
+        "human",
+        PEPE,
+      ),
+    ).toBe("🤖 🏦 Coinbase");
   });
   it("human deposit: the to side", () => {
-    expect(exchangeLabelFor([{ from_address: w, from_address_label: "High Balance", to_address: addr(9), to_address_label: "🏦 Binance: Deposit", token_address: PEPE }], w, "human", PEPE)).toBe("🏦 Binance: Deposit");
+    expect(
+      exchangeLabelFor(
+        [{ from_address: w, from_address_label: "High Balance", to_address: addr(9), to_address_label: "🏦 Binance: Deposit", token_address: PEPE }],
+        w,
+        "human",
+        PEPE,
+      ),
+    ).toBe("🏦 Binance: Deposit");
   });
   it("custody wallet: its own label", () => {
-    expect(exchangeLabelFor([{ from_address: addr(9), from_address_label: null, to_address: w, to_address_label: "🏦 Upbit", token_address: PEPE }], w, "custody", PEPE)).toBe("🏦 Upbit");
+    expect(
+      exchangeLabelFor(
+        [{ from_address: addr(9), from_address_label: null, to_address: w, to_address_label: "🏦 Upbit", token_address: PEPE }],
+        w,
+        "custody",
+        PEPE,
+      ),
+    ).toBe("🏦 Upbit");
   });
   it("prefers transfers of the atlas token; falls back to any 🏦 that is not the wallet; null when none", () => {
     const arr = [
@@ -88,7 +115,22 @@ describe("exchangeLabelFor — which side of the transfer names the exchange", (
 });
 
 function row(o: Partial<WalletRow> & { supply: number }): WalletRow {
-  return { address: addr(1), kind: "human", label: null, share: 0, entityLabel: null, exchange: null, country: null, bucket: "untraced", via: null, txHash: null, txAt: null, calls: 0, credits: 0, ...o };
+  return {
+    address: addr(1),
+    kind: "human",
+    label: null,
+    share: 0,
+    entityLabel: null,
+    exchange: null,
+    country: null,
+    bucket: "untraced",
+    via: null,
+    txHash: null,
+    txAt: null,
+    calls: 0,
+    credits: 0,
+    ...o,
+  };
 }
 
 describe("aggregate — the arithmetic behind the number", () => {
@@ -119,7 +161,10 @@ describe("aggregate — the arithmetic behind the number", () => {
     expect(a.countries).toEqual([]);
   });
   it("countries tie-break on code so the order is stable", () => {
-    const a = aggregate([row({ address: addr(1), supply: 10, bucket: "country", exchange: "x", country: "US" }), row({ address: addr(2), supply: 10, bucket: "country", exchange: "y", country: "KR" })]);
+    const a = aggregate([
+      row({ address: addr(1), supply: 10, bucket: "country", exchange: "x", country: "US" }),
+      row({ address: addr(2), supply: 10, bucket: "country", exchange: "y", country: "KR" }),
+    ]);
     expect(a.countries.map((c) => c.code)).toEqual(["KR", "US"]);
   });
 });
@@ -180,7 +225,11 @@ describe("atlas() end to end on the PEPE model", () => {
     let lookups = 0;
     const routes = (e: string, b: Record<string, unknown>) => {
       if (e === "transaction-with-token-transfer-lookup") lookups++;
-      if (e === "tgm/holders") return holders([{ address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", amount: 100 }, { address: "8Mm46CsqxiEz1u4Ykrqv4A1p4HCf9tADJXmSdUsQ6K3Q", amount: 50 }]);
+      if (e === "tgm/holders")
+        return holders([
+          { address: "5Q544fKrFoe6tsEbD7S8EmxGTJYAKtTVhAW5Q5pge4j1", amount: 100 },
+          { address: "8Mm46CsqxiEz1u4Ykrqv4A1p4HCf9tADJXmSdUsQ6K3Q", amount: 50 },
+        ]);
       if (e === "tgm/transfers") return (b.filters as Record<string, string>).to_address ? transfers([{ hash: "abc", from: "x", to: "y" }]) : transfers([]);
       return pepeRoutes(e, b);
     };
@@ -204,7 +253,8 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(a.warnings.join()).toMatch(/could not be looked up/);
   });
   it("a failed exchange-holders call degrades to 'everyone is human' with a warning", async () => {
-    const routes = (e: string, b: Record<string, unknown>) => (e === "tgm/holders" && b.label_type === "exchange" ? new Response("x", { status: 503 }) : pepeRoutes(e, b));
+    const routes = (e: string, b: Record<string, unknown>) =>
+      e === "tgm/holders" && b.label_type === "exchange" ? new Response("x", { status: 503 }) : pepeRoutes(e, b);
     const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
     expect(a.examined.custody).toBe(0);
     expect(a.warnings.join()).toMatch(/custody wallets could not be separated/);
@@ -216,7 +266,8 @@ describe("atlas() end to end on the PEPE model", () => {
   it("an entity outside the table lands in other-entity and is named in a warning", async () => {
     const routes = (e: string, b: Record<string, unknown>) => {
       const out = pepeRoutes(e, b) as { data?: Array<{ token_transfer_array: Array<{ to_address_label: string | null }> }> };
-      if (e === "transaction-with-token-transfer-lookup" && b.transaction_hash === "0x" + "b".padStart(64, "0")) out.data![0].token_transfer_array[0].to_address_label = "🏦 SomeNewCex 3";
+      if (e === "transaction-with-token-transfer-lookup" && b.transaction_hash === "0x" + "b".padStart(64, "0"))
+        out.data![0].token_transfer_array[0].to_address_label = "🏦 SomeNewCex 3";
       return out;
     };
     const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
@@ -225,7 +276,8 @@ describe("atlas() end to end on the PEPE model", () => {
   });
   it("replays byte-for-byte from a cache at 0 credits with the same hash (the fixture path)", async () => {
     const store = new MemoryCache();
-    const fetchImpl: typeof fetch = async (url, init) => new Response(JSON.stringify(pepeRoutes(String(url).replace("https://api.nansen.ai/api/v1/", ""), JSON.parse(String(init?.body)))), { status: 200 });
+    const fetchImpl: typeof fetch = async (url, init) =>
+      new Response(JSON.stringify(pepeRoutes(String(url).replace("https://api.nansen.ai/api/v1/", ""), JSON.parse(String(init?.body)))), { status: 200 });
     const live = new CachedNansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, store, rps: 1000 });
     const a = await atlas(live, "PEPE", { now: NOW });
     const replay = new CachedNansenClient("nsn_test_key_0000000000000000000000", { store, offline: true, rps: 1000 });
@@ -248,7 +300,8 @@ describe("timeout probes (USDC, live 2026-09-18: the per-wallet transfer filter 
         const d = body.date as { from: string; to: string };
         const days = Math.round((Date.parse(d.to) - Date.parse(d.from)) / 86_400_000) - 1;
         windows.push(days);
-        if (behaviour(days) === "timeout") return new Promise((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
+        if (behaviour(days) === "timeout")
+          return new Promise((_, rej) => init!.signal!.addEventListener("abort", () => rej(Object.assign(new Error("aborted"), { name: "AbortError" }))));
       }
       return new Response(JSON.stringify(pepeRoutes(endpoint, body)), { status: 200 });
     };
@@ -300,7 +353,13 @@ describe("exchangeLabelFor prefers a known exchange over a 🏦-tagged pool (WLF
   it("a swap + CEX deposit in one transaction resolves to the CEX", () => {
     const w = addr(1);
     const arr = [
-      { from_address: w, from_address_label: null, to_address: addr(2), to_address_label: "🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool [0x4637ea]", token_address: PEPE },
+      {
+        from_address: w,
+        from_address_label: null,
+        to_address: addr(2),
+        to_address_label: "🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool [0x4637ea]",
+        token_address: PEPE,
+      },
       { from_address: w, from_address_label: null, to_address: addr(3), to_address_label: "🏦 MEXC: Deposit [0xbff099]", token_address: PEPE },
     ];
     expect(exchangeLabelFor(arr, w, "human", PEPE)).toBe("🏦 MEXC: Deposit [0xbff099]");

@@ -1,7 +1,4 @@
 
-> holderatlas@0.1.0 bench
-> tsx scripts/bench.ts PEPE WLFI DEGEN MOG
-
 ## Benchmark — 2026-09-18T10:38Z · 4 tokens × 1 cold run · live Nansen API · defaults (12 custody + 40 human wallets, 4-wide lookup pool, 5 rps)
 
 | token | cold p50 | cold p95 | warm p50 | credits | live calls | failed | result | warm hash = cold |

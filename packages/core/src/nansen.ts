@@ -25,7 +25,9 @@ const num = z.number().nullable().optional();
 const str = z.string().nullable().optional();
 
 export const SearchResponse = z.object({
-  tokens: z.array(z.object({ name: z.string(), symbol: z.string(), chain: z.string(), address: z.string(), rank: num, market_cap: num, volume_24h: num, price: num })).default([]),
+  tokens: z
+    .array(z.object({ name: z.string(), symbol: z.string(), chain: z.string(), address: z.string(), rank: num, market_cap: num, volume_24h: num, price: num }))
+    .default([]),
   total_results: z.number().optional(),
 });
 export type SearchResponse = z.infer<typeof SearchResponse>;
@@ -39,7 +41,11 @@ export const HolderRow = z.object({
   balance_change_7d: num,
 });
 export type HolderRow = z.infer<typeof HolderRow>;
-export const HoldersResponse = z.object({ data: z.array(HolderRow), pagination: z.object({ is_last_page: z.boolean().optional() }).passthrough(), warnings: z.array(z.string()).nullable().optional() });
+export const HoldersResponse = z.object({
+  data: z.array(HolderRow),
+  pagination: z.object({ is_last_page: z.boolean().optional() }).passthrough(),
+  warnings: z.array(z.string()).nullable().optional(),
+});
 export type HoldersResponse = z.infer<typeof HoldersResponse>;
 
 export const TransferRow = z.object({
@@ -71,7 +77,17 @@ export const TokenTransfer = z.object({
 });
 export type TokenTransfer = z.infer<typeof TokenTransfer>;
 export const TxLookupResponse = z.object({
-  data: z.array(z.object({ transaction_hash: z.string(), from_address: z.string(), from_address_label: str, to_address: z.string(), to_address_label: str, block_timestamp: z.string(), token_transfer_array: z.array(TokenTransfer).nullable() })),
+  data: z.array(
+    z.object({
+      transaction_hash: z.string(),
+      from_address: z.string(),
+      from_address_label: str,
+      to_address: z.string(),
+      to_address_label: str,
+      block_timestamp: z.string(),
+      token_transfer_array: z.array(TokenTransfer).nullable(),
+    }),
+  ),
 });
 export type TxLookupResponse = z.infer<typeof TxLookupResponse>;
 
@@ -83,13 +99,49 @@ function parse<T>(schema: z.ZodType<T>, endpoint: string, raw: unknown): T {
 
 export const nansen = {
   search: async (c: NansenClient, search_query: string, opts?: CallOptions) =>
-    parse(SearchResponse, "search/general", await c.post("search/general", { search_query, result_type: "token", limit: 25 }, ["tokens[].symbol", "tokens[].chain", "tokens[].address", "tokens[].rank", "tokens[].market_cap"], opts)),
+    parse(
+      SearchResponse,
+      "search/general",
+      await c.post(
+        "search/general",
+        { search_query, result_type: "token", limit: 25 },
+        ["tokens[].symbol", "tokens[].chain", "tokens[].address", "tokens[].rank", "tokens[].market_cap"],
+        opts,
+      ),
+    ),
   holders: async (c: NansenClient, chain: Chain, token_address: string, perPage = 100, opts?: CallOptions) =>
-    parse(HoldersResponse, "tgm/holders", await c.post("tgm/holders", { chain, token_address, pagination: { page: 1, per_page: perPage } }, ["data[].address", "data[].address_label", "data[].token_amount", "data[].ownership_percentage"], opts)),
+    parse(
+      HoldersResponse,
+      "tgm/holders",
+      await c.post(
+        "tgm/holders",
+        { chain, token_address, pagination: { page: 1, per_page: perPage } },
+        ["data[].address", "data[].address_label", "data[].token_amount", "data[].ownership_percentage"],
+        opts,
+      ),
+    ),
   exchangeHolders: async (c: NansenClient, chain: Chain, token_address: string, perPage = 100, opts?: CallOptions) =>
-    parse(HoldersResponse, "tgm/holders", await c.post("tgm/holders", { chain, token_address, label_type: "exchange", pagination: { page: 1, per_page: perPage } }, ["data[].address", "data[].token_amount"], opts)),
+    parse(
+      HoldersResponse,
+      "tgm/holders",
+      await c.post(
+        "tgm/holders",
+        { chain, token_address, label_type: "exchange", pagination: { page: 1, per_page: perPage } },
+        ["data[].address", "data[].token_amount"],
+        opts,
+      ),
+    ),
   /** CEX-only transfers of `token_address` touching `wallet` in the given direction, newest first (default 5 rows). */
-  cexTransfers: async (c: NansenClient, chain: Chain, token_address: string, wallet: string, direction: "to" | "from", date: DateRange, perPage = 5, opts?: CallOptions) =>
+  cexTransfers: async (
+    c: NansenClient,
+    chain: Chain,
+    token_address: string,
+    wallet: string,
+    direction: "to" | "from",
+    date: DateRange,
+    perPage = 5,
+    opts?: CallOptions,
+  ) =>
     parse(
       TransfersResponse,
       "tgm/transfers",
@@ -109,7 +161,25 @@ export const nansen = {
     ),
   /** 1 credit. Contracts come back with a "Deployed by" / "Created by" relation; EOAs never do (sentwrong's spike, 2026-09-16). */
   relatedWallets: async (c: NansenClient, chain: Chain, address: string, opts?: CallOptions) =>
-    parse(RelatedWalletsResponse, "profiler/address/related-wallets", await c.post("profiler/address/related-wallets", { address, chain, pagination: { page: 1, per_page: 20 } }, ["data[].relation", "data[].address_label"], opts)),
+    parse(
+      RelatedWalletsResponse,
+      "profiler/address/related-wallets",
+      await c.post(
+        "profiler/address/related-wallets",
+        { address, chain, pagination: { page: 1, per_page: 20 } },
+        ["data[].relation", "data[].address_label"],
+        opts,
+      ),
+    ),
   txLookup: async (c: NansenClient, chain: Chain, transaction_hash: string, opts?: CallOptions) =>
-    parse(TxLookupResponse, "transaction-with-token-transfer-lookup", await c.post("transaction-with-token-transfer-lookup", { chain, transaction_hash }, ["data[].token_transfer_array[].from_address_label", "data[].token_transfer_array[].to_address_label"], opts)),
+    parse(
+      TxLookupResponse,
+      "transaction-with-token-transfer-lookup",
+      await c.post(
+        "transaction-with-token-transfer-lookup",
+        { chain, transaction_hash },
+        ["data[].token_transfer_array[].from_address_label", "data[].token_transfer_array[].to_address_label"],
+        opts,
+      ),
+    ),
 };

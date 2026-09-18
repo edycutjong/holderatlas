@@ -106,7 +106,20 @@ export class CachedNansenClient extends NansenClient {
     if (hit?.failed && this.offline) {
       // the live run recorded a timeout here — replay it as one (never as data), so the atlas comes out identical
       const e = Object.assign(new Error("replayed timeout"), { name: "AbortError" });
-      this.calls.push({ endpoint, body, credits: 0, ms: 0, cached: true, status: 0, fieldsUsed, responseHash: "", attempts: 0, totalMs: 0, ok: false, error: "timeout (replayed)" });
+      this.calls.push({
+        endpoint,
+        body,
+        credits: 0,
+        ms: 0,
+        cached: true,
+        status: 0,
+        fieldsUsed,
+        responseHash: "",
+        attempts: 0,
+        totalMs: 0,
+        ok: false,
+        error: "timeout (replayed)",
+      });
       throw e;
     }
     if (hit && !hit.failed && (fresh || this.offline)) {
@@ -133,7 +146,8 @@ export class CachedNansenClient extends NansenClient {
       raw = await this.postRaw(endpoint, body, opts);
     } catch (e) {
       this.recordFailure(endpoint, body, fieldsUsed, e, Date.now() - t0);
-      if (e instanceof Error && e.name === "AbortError") this.store.set(key, { storedAt: new Date().toISOString(), ttlMs: this.ttlMs, endpoint, body, text: "", failed: "timeout" });
+      if (e instanceof Error && e.name === "AbortError")
+        this.store.set(key, { storedAt: new Date().toISOString(), ttlMs: this.ttlMs, endpoint, body, text: "", failed: "timeout" });
       throw e;
     }
     const { text, ms, status, attempts, totalMs } = raw;

@@ -22,19 +22,44 @@ export const CONTRACT = "0xf5503773aa06f0ef8fc2e7dd90b6e3d3f8b5c8a1";
 export const addr = (i: number) => "0x" + String(i).padStart(40, "0");
 
 export const searchTokens = (tokens: Array<{ chain: string; address: string; symbol?: string; name?: string; rank?: number; market_cap?: number }>) => ({
-  tokens: tokens.map((t, i) => ({ name: t.name ?? "Pepe", symbol: t.symbol ?? "PEPE", chain: t.chain, address: t.address, price: 1, volume_24h: 1, market_cap: t.market_cap ?? 1, rank: t.rank ?? i + 1 })),
+  tokens: tokens.map((t, i) => ({
+    name: t.name ?? "Pepe",
+    symbol: t.symbol ?? "PEPE",
+    chain: t.chain,
+    address: t.address,
+    price: 1,
+    volume_24h: 1,
+    market_cap: t.market_cap ?? 1,
+    rank: t.rank ?? i + 1,
+  })),
   entities: [],
   total_results: tokens.length,
 });
 
 export const holders = (rows: Array<{ address: string; label?: string | null; amount: number }>) => ({
-  data: rows.map((r) => ({ address: r.address, address_label: r.label ?? "", token_amount: r.amount, ownership_percentage: r.amount / 1e6, value_usd: r.amount })),
+  data: rows.map((r) => ({
+    address: r.address,
+    address_label: r.label ?? "",
+    token_amount: r.amount,
+    ownership_percentage: r.amount / 1e6,
+    value_usd: r.amount,
+  })),
   pagination: { page: 1, per_page: 100, is_last_page: true },
   warnings: null,
 });
 
 export const transfers = (rows: Array<{ hash: string; from: string; to: string; at?: string }>) => ({
-  data: rows.map((r) => ({ block_timestamp: r.at ?? "2026-09-17T08:02:23", transaction_hash: r.hash, from_address: r.from, to_address: r.to, from_address_label: "Token Billionaire", to_address_label: "High Activity", transaction_type: "transfer", transfer_amount: 1, transfer_value_usd: 1 })),
+  data: rows.map((r) => ({
+    block_timestamp: r.at ?? "2026-09-17T08:02:23",
+    transaction_hash: r.hash,
+    from_address: r.from,
+    to_address: r.to,
+    from_address_label: "Token Billionaire",
+    to_address_label: "High Activity",
+    transaction_type: "transfer",
+    transfer_amount: 1,
+    transfer_value_usd: 1,
+  })),
   pagination: { page: 1, per_page: 5, is_last_page: true },
 });
 
@@ -47,7 +72,15 @@ export const lookup = (transfersArr: Array<{ from: string; fromLabel?: string | 
       to_address: PEPE,
       to_address_label: "Token Contract",
       block_timestamp: "2026-09-17T08:02:23",
-      token_transfer_array: transfersArr.map((t) => ({ from_address: t.from, from_address_label: t.fromLabel ?? null, to_address: t.to, to_address_label: t.toLabel ?? null, token_address: t.token ?? PEPE, token_symbol: "PEPE", token_amount: 1 })),
+      token_transfer_array: transfersArr.map((t) => ({
+        from_address: t.from,
+        from_address_label: t.fromLabel ?? null,
+        to_address: t.to,
+        to_address_label: t.toLabel ?? null,
+        token_address: t.token ?? PEPE,
+        token_symbol: "PEPE",
+        token_amount: 1,
+      })),
     },
   ],
 });
@@ -70,7 +103,11 @@ export function pepeRoutes(endpoint: string, body: Record<string, unknown>) {
     ]);
   }
   if (endpoint === "tgm/holders") {
-    if (body.label_type === "exchange") return holders([{ address: BINANCE_14, amount: 500 }, { address: UPBIT, amount: 100 }]);
+    if (body.label_type === "exchange")
+      return holders([
+        { address: BINANCE_14, amount: 500 },
+        { address: UPBIT, amount: 100 },
+      ]);
     return holders([
       { address: BINANCE_14, label: "Token Billionaire", amount: 500 },
       { address: POOL, label: "UniswapV2", amount: 300 },
@@ -100,7 +137,8 @@ export function pepeRoutes(endpoint: string, body: Record<string, unknown>) {
     const h = String(body.transaction_hash);
     if (h === H(10)) return lookup([{ from: addr(7), to: BINANCE_14, toLabel: "🏦 Binance 14 [0x28c6c0]" }]);
     if (h === H(11)) return lookup([{ from: addr(8), to: UPBIT, toLabel: "​​🏦 Upbit [0x3f9a83]" }]);
-    if (h === H(1) || h === H(2) || h === H(3)) return lookup([{ from: COINBASE, fromLabel: "🤖 🏦 Coinbase [0xa9d1e0]", to: h === H(1) ? addr(1) : h === H(2) ? addr(2) : addr(3) }]);
+    if (h === H(1) || h === H(2) || h === H(3))
+      return lookup([{ from: COINBASE, fromLabel: "🤖 🏦 Coinbase [0xa9d1e0]", to: h === H(1) ? addr(1) : h === H(2) ? addr(2) : addr(3) }]);
     if (h === H(4)) return lookup([{ from: addr(4), to: addr(44), toLabel: "🏦 Binance: Deposit [0xcd38bb]" }]);
     return lookup([]);
   }

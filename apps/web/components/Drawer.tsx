@@ -1,7 +1,23 @@
 "use client";
 import type { Call } from "@holderatlas/core";
 
-export function Drawer({ calls, open, onClose, credits, ms, asOf, hash }: { calls: Call[]; open: boolean; onClose: () => void; credits: number; ms: number; asOf?: string | null; hash?: string }) {
+export function Drawer({
+  calls,
+  open,
+  onClose,
+  credits,
+  ms,
+  asOf,
+  hash,
+}: {
+  calls: Call[];
+  open: boolean;
+  onClose: () => void;
+  credits: number;
+  ms: number;
+  asOf?: string | null;
+  hash?: string;
+}) {
   const cached = calls.filter((c) => c.cached).length;
   const byEp = new Map<string, { n: number; cr: number; cached: number; ms: number; live: number }>();
   for (const c of calls) {
@@ -46,7 +62,8 @@ export function Drawer({ calls, open, onClose, credits, ms, asOf, hash }: { call
         </tbody>
       </table>
       <p className="sum">
-        {credits} credits · {calls.length} calls ({cached} cached{asOf ? `, as of ${asOf.slice(0, 16).replace("T", " ")} UTC` : ""}) · {(ms / 1000).toFixed(1)} s{hash ? ` · atlas ${hash}` : ""}
+        {credits} credits · {calls.length} calls ({cached} cached{asOf ? `, as of ${asOf.slice(0, 16).replace("T", " ")} UTC` : ""}) · {(ms / 1000).toFixed(1)}{" "}
+        s{hash ? ` · atlas ${hash}` : ""}
       </p>
       <table>
         <thead>
@@ -82,6 +99,13 @@ export function Drawer({ calls, open, onClose, credits, ms, asOf, hash }: { call
 function summarise(body: Record<string, unknown>): string {
   const f = body.filters as Record<string, unknown> | undefined;
   const w = (f?.to_address ?? f?.from_address) as string | undefined;
-  const parts = [body.chain, body.label_type ? `label_type=${body.label_type}` : null, w ? `${f?.to_address ? "to" : "from"}=${w.slice(0, 8)}…` : null, body.transaction_hash ? `tx=${String(body.transaction_hash).slice(0, 10)}…` : null, body.address ? `addr=${String(body.address).slice(0, 8)}…` : null, body.search_query ? `q=${body.search_query}` : null];
+  const parts = [
+    body.chain,
+    body.label_type ? `label_type=${body.label_type}` : null,
+    w ? `${f?.to_address ? "to" : "from"}=${w.slice(0, 8)}…` : null,
+    body.transaction_hash ? `tx=${String(body.transaction_hash).slice(0, 10)}…` : null,
+    body.address ? `addr=${String(body.address).slice(0, 8)}…` : null,
+    body.search_query ? `q=${body.search_query}` : null,
+  ];
   return parts.filter(Boolean).join(" ");
 }

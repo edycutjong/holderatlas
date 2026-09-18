@@ -77,7 +77,14 @@ export type Atlas = {
 export type AtlasEvent =
   | { type: "token"; token: Token; candidates: Candidate[] }
   | { type: "holders"; fetched: number; custody: number; human: number; structural: number; examined: { custody: number; human: number } }
-  | { type: "wallet"; row: WalletRow; done: number; total: number; partial: Pick<Atlas, "countries" | "global" | "untraced" | "unnamed" | "otherEntity" | "errors" | "attributable" | "attributableByWallets"> }
+  | {
+      type: "wallet";
+      row: WalletRow;
+      done: number;
+      total: number;
+      /** the wallet's share of the whole top-N supply — stable while streaming, unlike row.share */ topShare: number;
+      partial: Pick<Atlas, "countries" | "global" | "untraced" | "unnamed" | "otherEntity" | "errors" | "attributable" | "attributableByWallets">;
+    }
   | { type: "reclass"; row: WalletRow; reason: string }
   | { type: "atlas"; atlas: Atlas };
 
@@ -130,17 +137,22 @@ export async function resolveToken(client: NansenClient, input: string, chain?: 
   const all: Candidate[] = (res.tokens ?? [])
     .filter((t) => isChain(t.chain))
     .map((t) => ({ symbol: t.symbol, name: t.name, chain: t.chain as Chain, address: t.address, marketCap: t.market_cap ?? null, rank: t.rank ?? null }));
-  let pool = all;
-  if (isAddr) pool = all.filter((t) => lc(t.address) === lc(q));
-  else pool = all.filter((t) => lc(t.symbol) === lc(q) || lc(t.name) === lc(q));
+  let pool = isAddr ? all.filter((t) => lc(t.address) === lc(q)) : all.filter((t) => lc(t.symbol) === lc(q) || lc(t.name) === lc(q));
   if (!pool.length && !isAddr) pool = all; // no exact symbol match — fall back to whatever Nansen ranked for this text
   if (chain) pool = pool.filter((t) => t.chain === chain);
   if (!pool.length) {
     if (isAddr && chain && (EVM_ADDRESS.test(q) ? chain !== "solana" : chain === "solana")) {
       // an address Nansen's search does not index can still have holders — go straight to the holders call
-      return { token: { symbol: q.slice(0, 6) + "…", name: "unknown token", chain, address: EVM_ADDRESS.test(q) ? lc(q) : q, marketCap: null }, candidates: all };
+      return {
+        token: { symbol: q.slice(0, 6) + "…", name: "unknown token", chain, address: EVM_ADDRESS.test(q) ? lc(q) : q, marketCap: null },
+        candidates: all,
+      };
     }
-    throw new AtlasError("no-token", isAddr ? `no token at ${q}${chain ? ` on ${chain}` : " — add --chain"}` : `no token named "${q}" on a supported chain`, all);
+    throw new AtlasError(
+      "no-token",
+      isAddr ? `no token at ${q}${chain ? ` on ${chain}` : " — add --chain"}` : `no token named "${q}" on a supported chain`,
+      all,
+    );
   }
   const score = (t: Candidate) => (t.marketCap ?? 0) * 1e6 + (t.rank ? 1e6 - t.rank : 0);
   const best = [...pool].sort((a, b) => score(b) - score(a))[0];
@@ -219,7 +231,12 @@ export function aggregate(rows: WalletRow[]) {
   const bucket = (b: Bucket): BucketRow => {
     const rs = examined.filter((r) => r.bucket === b);
     const supply = rs.reduce((n, r) => n + r.supply, 0);
-    return { share: share(supply), supply, wallets: rs.length, exchanges: [...new Set(rs.map((r) => r.exchange ?? r.entityLabel ?? "").filter(Boolean))].sort() };
+    return {
+      share: share(supply),
+      supply,
+      wallets: rs.length,
+      exchanges: [...new Set(rs.map((r) => r.exchange ?? r.entityLabel ?? "").filter(Boolean))].sort(),
+    };
   };
   const byCountry = new Map<string, WalletRow[]>();
   for (const r of examined) if (r.bucket === "country" && r.country) byCountry.set(r.country, [...(byCountry.get(r.country) ?? []), r]);
@@ -248,7 +265,9 @@ export function aggregate(rows: WalletRow[]) {
 
 /** Stable hash of the decision: token, examined rows' attribution, the number. Latency, credits and labels' free text are display. */
 export function atlasHash(a: Pick<Atlas, "token" | "rows" | "attributable">): string {
-  const rows = a.rows.filter((r) => r.kind !== "structural").map((r) => ({ a: r.address, k: r.kind, x: r.exchange, c: r.country, b: r.bucket, s: Number(r.share.toFixed(6)) }));
+  const rows = a.rows
+    .filter((r) => r.kind !== "structural")
+    .map((r) => ({ a: r.address, k: r.kind, x: r.exchange, c: r.country, b: r.bucket, s: Number(r.share.toFixed(6)) }));
   return sha256(JSON.stringify(canonicalize({ t: `${a.token.chain}:${a.token.address}`, rows, p: Number(a.attributable.toFixed(4)) }))).slice(0, 12);
 }
 
@@ -263,12 +282,20 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   emit({ type: "token", token, candidates });
   const chain = token.chain;
   const naming = NAMING_CHAINS.includes(chain);
-  if (!naming) warnings.push(`${chain}: Nansen's transfer lookup (the only ≤5-credit field that names an exchange) has no ${chain} support — exchanges are counted but unnamed, so nothing can be placed on the map.`);
+  if (!naming)
+    warnings.push(
+      `${chain}: Nansen's transfer lookup (the only ≤5-credit field that names an exchange) has no ${chain} support — exchanges are counted but unnamed, so nothing can be placed on the map.`,
+    );
 
-  const [h, x] = await Promise.all([settle(nansen.holders(client, chain, token.address, HOLDERS_PAGE)), settle(nansen.exchangeHolders(client, chain, token.address, HOLDERS_PAGE))]);
+  const [h, x] = await Promise.all([
+    settle(nansen.holders(client, chain, token.address, HOLDERS_PAGE)),
+    settle(nansen.exchangeHolders(client, chain, token.address, HOLDERS_PAGE)),
+  ]);
   if (!h.ok) throw new Error(`tgm/holders failed: ${h.error}`);
   if (!x.ok) warnings.push(`exchange-holder call failed (${x.error}) — custody wallets could not be separated from people`);
-  const exchangeSet = new Set((x.ok ? x.data.data : []).map((r) => (r.address ? (r.address.startsWith("0x") ? lc(r.address) : r.address) : "")).filter(Boolean));
+  const exchangeSet = new Set(
+    (x.ok ? x.data.data : []).map((r) => (r.address ? (r.address.startsWith("0x") ? lc(r.address) : r.address) : "")).filter(Boolean),
+  );
   const parts = partition(h.data.data, exchangeSet);
   const totalSupply = parts.reduce((n, p) => n + p.supply, 0);
   const custodyRows = parts.filter((p) => p.kind === "custody").slice(0, opts.custody ?? DEFAULT_CUSTODY);
@@ -282,7 +309,21 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     examined: { custody: custodyRows.length, human: humanRows.length },
   });
 
-  const rows: WalletRow[] = parts.filter((p) => p.kind === "structural").map((p) => ({ ...p, share: 0, entityLabel: null, exchange: null, country: null, bucket: "untraced" as Bucket, via: null, txHash: null, txAt: null, calls: 0, credits: 0 }));
+  const rows: WalletRow[] = parts
+    .filter((p) => p.kind === "structural")
+    .map((p) => ({
+      ...p,
+      share: 0,
+      entityLabel: null,
+      exchange: null,
+      country: null,
+      bucket: "untraced" as Bucket,
+      via: null,
+      txHash: null,
+      txAt: null,
+      calls: 0,
+      credits: 0,
+    }));
   // Nansen's per-wallet transfer filter times out (10 s) on the highest-volume tokens (USDC, live 2026-09-18). Two sequential
   // probes on the largest examined wallet decide the window for everyone — deterministic, so a fixture replays identically:
   // 1-year window times out → 30 days; that times out too → every wallet is skipped with a named reason, never guessed.
@@ -291,7 +332,12 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   const probeWallet = custodyRows[0] ?? humanRows[0];
   if (probeWallet) {
     for (const days of [365, SHORT_WINDOW_DAYS]) {
-      const t = await settle(nansen.cexTransfers(client, chain, token.address, probeWallet.address, "to", window(now, days), 5, { timeoutMs: Math.round(client.defaultTimeoutMs * 1.25), retries: 0 }));
+      const t = await settle(
+        nansen.cexTransfers(client, chain, token.address, probeWallet.address, "to", window(now, days), 5, {
+          timeoutMs: Math.round(client.defaultTimeoutMs * 1.25),
+          retries: 0,
+        }),
+      );
       if (t.ok || t.error !== "timeout") break;
       windowDays = days === 365 ? SHORT_WINDOW_DAYS : windowDays;
       if (days === SHORT_WINDOW_DAYS) fastFail = true;
@@ -301,7 +347,19 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   let done = 0;
   const lookup = async (p: (typeof queue)[number]): Promise<void> => {
     const c0 = client.calls.length;
-    const row: WalletRow = { ...p, share: 0, entityLabel: null, exchange: null, country: null, bucket: "untraced", via: null, txHash: null, txAt: null, calls: 0, credits: 0 };
+    const row: WalletRow = {
+      ...p,
+      share: 0,
+      entityLabel: null,
+      exchange: null,
+      country: null,
+      bucket: "untraced",
+      via: null,
+      txHash: null,
+      txAt: null,
+      calls: 0,
+      credits: 0,
+    };
     // 1. the wallet's newest exchange-touching transfer of this token (withdrawals first, then deposits)
     let tx: { hash: string; at: string; via: "withdrawal" | "deposit" } | null = null;
     for (const dir of ["to", "from"] as const) {
@@ -309,7 +367,12 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
         row.error = FAST_FAIL_MESSAGE;
         break;
       }
-      const t = await settle(nansen.cexTransfers(client, chain, token.address, p.address, dir, window(now, windowDays), 5, { timeoutMs: Math.round(client.defaultTimeoutMs * 1.25), retries: 0 }));
+      const t = await settle(
+        nansen.cexTransfers(client, chain, token.address, p.address, dir, window(now, windowDays), 5, {
+          timeoutMs: Math.round(client.defaultTimeoutMs * 1.25),
+          retries: 0,
+        }),
+      );
       if (!t.ok) {
         row.error = `tgm/transfers ${dir}: ${t.error}`;
         break;
@@ -343,13 +406,33 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     } else if (row.error) row.bucket = "error";
     else row.bucket = "untraced";
     // calls made by THIS lookup: the client log is shared, so count by the wallet's own address in the bodies
-    const made = client.calls.slice(c0).filter((c) => JSON.stringify(c.body).toLowerCase().includes(p.address.toLowerCase()) || (row.txHash ? JSON.stringify(c.body).includes(row.txHash) : false));
+    const made = client.calls
+      .slice(c0)
+      .filter(
+        (c) => JSON.stringify(c.body).toLowerCase().includes(p.address.toLowerCase()) || (row.txHash ? JSON.stringify(c.body).includes(row.txHash) : false),
+      );
     row.calls = made.length;
     row.credits = made.reduce((n, c) => n + c.credits, 0);
     rows.push(row);
     done++;
     const partial = aggregate(rows);
-    emit({ type: "wallet", row, done, total: queue.length, partial: { countries: partial.countries, global: partial.global, untraced: partial.untraced, unnamed: partial.unnamed, otherEntity: partial.otherEntity, errors: partial.errors, attributable: partial.attributable, attributableByWallets: partial.attributableByWallets } });
+    emit({
+      type: "wallet",
+      row,
+      done,
+      total: queue.length,
+      topShare: totalSupply > 0 ? row.supply / totalSupply : 0,
+      partial: {
+        countries: partial.countries,
+        global: partial.global,
+        untraced: partial.untraced,
+        unnamed: partial.unnamed,
+        otherEntity: partial.otherEntity,
+        errors: partial.errors,
+        attributable: partial.attributable,
+        attributableByWallets: partial.attributableByWallets,
+      },
+    });
   };
   const width = Math.max(1, Math.min(opts.concurrency ?? DEFAULT_CONCURRENCY, queue.length || 1));
   let next = 0;
@@ -368,7 +451,9 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   // 3. an unlabelled mega-holder with no exchange trace is more often a contract (staking, bridge, vesting) than a person:
   //    one related-wallets call (1 credit) per untraced row ≥ 2 % of the analysed supply; "Deployed by" → structural.
   aggregate(rows);
-  for (const row of rows.filter((r) => r.kind === "human" && (r.bucket === "untraced" || r.bucket === "error") && r.share >= CONTRACT_CHECK_MIN_SHARE && naming)) {
+  for (const row of rows.filter(
+    (r) => r.kind === "human" && (r.bucket === "untraced" || r.bucket === "error") && r.share >= CONTRACT_CHECK_MIN_SHARE && naming,
+  )) {
     const c0 = client.calls.length;
     const rel = await settle(nansen.relatedWallets(client, chain, row.address, { retries: 0 }));
     const made = client.calls.slice(c0);
@@ -390,7 +475,10 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   if (unknownEntities.length) warnings.push(`entities not in exchanges.json (counted as unattributed): ${unknownEntities.join(", ")}`);
   const failed = rows.filter((r) => r.bucket === "error").length;
   if (failed) warnings.push(`${failed} wallet${failed > 1 ? "s" : ""} could not be looked up (timeouts or errors) — shown as "lookup failed", never guessed`);
-  if (windowDays !== 365) warnings.push(`Nansen's per-wallet transfer filter timed out on ${token.symbol} over 1 year — ${fastFail ? "and over 30 days: every wallet was skipped, nothing was guessed" : `the exchange-trace window is 30 days for this token`}`);
+  if (windowDays !== 365)
+    warnings.push(
+      `Nansen's per-wallet transfer filter timed out on ${token.symbol} over 1 year — ${fastFail ? "and over 30 days: every wallet was skipped, nothing was guessed" : `the exchange-trace window is 30 days for this token`}`,
+    );
   const calls = client.calls.slice(callsBefore);
   const out: Atlas = {
     input: input.trim(),

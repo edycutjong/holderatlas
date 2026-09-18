@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Holder Atlas — an empty globe; Nansen exchange labels land and one bubble turns green where the holders are">
+<!-- STORYBOARD (dur 6s — must equal this file's single master dur)
+  0-10%   steady state: the static icon — plate, globe outline, one green bubble upper-right (poster; geometry = build/apps/web/app/icon.svg × 8)
+  10-32%  trigger:      the bubble withdraws (the globe is empty, nothing placed); a scan sweeps the globe                              data-story="beat-2"
+  32-56%  mechanism:    An empty globe; Nansen exchange labels land, one bubble turns green where the holders are, one grey stays global. data-story="beat-3"
+  56-84%  resolution:   the green bubble persists with a breath; the grey global bubble persists small                                    data-story="beat-4"
+  84-100% breathe + seam: overlays fade 94-99% back to the poster
+-->
+<defs>
+  <linearGradient id="scan" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#38bdf8" stop-opacity="0"/><stop offset=".5" stop-color="#38bdf8" stop-opacity=".45"/><stop offset="1" stop-color="#38bdf8" stop-opacity="0"/></linearGradient>
+  <filter id="glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+  <clipPath id="plate"><rect width="512" height="512" rx="112"/></clipPath>
+  <clipPath id="globe"><circle cx="256" cy="256" r="176"/></clipPath>
+</defs>
+<style>
+  @keyframes breath { 0%,58% { opacity: 0 } 66% { opacity: .7 } 76% { opacity: .25 } 86% { opacity: .7 } 94%,100% { opacity: 0 } }
+  .breath { animation: breath 6s ease-in-out infinite }
+  [data-story] { will-change: opacity }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+
+<!-- poster: the static icon, fully visible at t=0 -->
+<rect width="512" height="512" rx="112" fill="#0a0e13"/>
+<circle cx="256" cy="256" r="176" fill="none" stroke="#2c3b4b" stroke-width="32"/>
+<path d="M80 256h352M256 80c-64 56-64 296 0 352M256 80c64 56 64 296 0 352" fill="none" stroke="#2c3b4b" stroke-width="24" stroke-linecap="round"/>
+<circle cx="328" cy="200" r="72" fill="#22c55e"/>
+
+<!-- beat 2: the placed state is withdrawn — the globe is empty, nothing decided -->
+<circle cx="328" cy="200" r="76" fill="#0a0e13" opacity="0" data-story="beat-2">
+  <animate attributeName="opacity" values="0;0;1;1;0;0;0" keyTimes="0;.10;.14;.40;.46;.94;1" dur="6s" repeatCount="indefinite"/>
+</circle>
+<g opacity="0" data-story="beat-2">
+  <animate attributeName="opacity" values="0;0;1;1;0;0;0" keyTimes="0;.10;.14;.40;.46;.94;1" dur="6s" repeatCount="indefinite"/>
+  <circle cx="256" cy="256" r="176" fill="none" stroke="#2c3b4b" stroke-width="32"/>
+  <path d="M80 256h352M256 80c-64 56-64 296 0 352M256 80c64 56 64 296 0 352" fill="none" stroke="#2c3b4b" stroke-width="24" stroke-linecap="round"/>
+</g>
+<!-- beat 2: the scan sweeps across the globe while Nansen names the exchanges -->
+<g clip-path="url(#globe)">
+  <rect x="-80" y="0" width="160" height="512" fill="url(#scan)" opacity="0" data-story="beat-2">
+    <animate attributeName="x" values="-80;-80;432;432" keyTimes="0;.16;.36;1" dur="6s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;.16;.18;.34;.37;1" dur="6s" repeatCount="indefinite"/>
+  </rect>
+</g>
+
+<!-- beat 3: labels land — one bubble turns green where the holders are, one grey bubble stays global; both persist to the seam -->
+<circle cx="328" cy="200" r="72" fill="#22c55e" opacity="0" data-story="beat-3">
+  <animate attributeName="opacity" values="0;0;1;1;0;0" keyTimes="0;.40;.46;.94;.99;1" dur="6s" repeatCount="indefinite"/>
+  <animate attributeName="r" values="0;0;84;72;72;72" keyTimes="0;.40;.46;.52;.94;1" dur="6s" repeatCount="indefinite"/>
+</circle>
+<circle cx="186" cy="318" r="30" fill="#8b9bab" opacity="0" data-story="beat-3">
+  <animate attributeName="opacity" values="0;0;.85;.85;0;0" keyTimes="0;.44;.50;.94;.99;1" dur="6s" repeatCount="indefinite"/>
+</circle>
+<!-- beat 4: glow breath on the placed bubble -->
+<circle class="breath" cx="328" cy="200" r="72" fill="#22c55e" filter="url(#glow)" opacity="0" data-story="beat-4"/>
+</svg>
