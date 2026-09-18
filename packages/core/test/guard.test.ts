@@ -213,3 +213,15 @@ describe("GET /api/og — an image never 4xxs and never spends", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 });
+
+describe("review pass 1 (2026-09-18): /api/og never previews a half-cached token", () => {
+  it("a disk cache holding only the search + holders responses yields the generic card, not a poster of error rows", async () => {
+    const { GET: og } = await import("@/app/api/og/route");
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>());
+    const res = await og(new NextRequest("http://localhost:3000/api/og?q=NOTCACHEDTOKEN&chain=base"));
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("image/png");
+    expect(fetch).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+});

@@ -369,3 +369,27 @@ describe("exchangeLabelFor prefers a known exchange over a 🏦-tagged pool (WLF
     expect(exchangeLabelFor(arr.slice(0, 1), w, "human", PEPE)).toMatch(/Uniswap/);
   });
 });
+
+describe("review pass 1 (2026-09-18): no fuzzy token fallback", () => {
+  it("a ticker with no exact match is a no-token error naming Nansen's closest hits — never a silent map of the wrong token", async () => {
+    const routes = (e: string, b: Record<string, unknown>) => (e === "search/general" ? pepeRoutes(e, { ...b, search_query: "PEPE" }) : pepeRoutes(e, b));
+    const c = fakeClient(routes);
+    const err = await atlas(c, "PEP", { now: NOW }).catch((x) => x);
+    expect(err).toBeInstanceOf(AtlasError);
+    expect(err.message).toMatch(/no token named "PEP".*closest: PEPE on ethereum/);
+    expect(c.creditsSpent).toBe(0);
+  });
+});
+
+describe("live QA pass 1 (2026-09-18): a burn address with --chain", () => {
+  it("Nansen's 422 on tgm/holders becomes a no-token error, not a 502", async () => {
+    const routes = (e: string, b: Record<string, unknown>) =>
+      e === "tgm/holders" && !b.label_type
+        ? new Response('{"error":"Burn address not allowed","message":"Burn address 0x…dead is not allowed"}', { status: 422 })
+        : pepeRoutes(e, b);
+    const err = await atlas(fakeClient(routes), BURN, { now: NOW, chain: "ethereum" }).catch((x) => x);
+    expect(err).toBeInstanceOf(AtlasError);
+    expect(err.code).toBe("no-token");
+    expect(err.message).toMatch(/Burn address not allowed/);
+  });
+});

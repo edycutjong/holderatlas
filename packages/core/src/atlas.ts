@@ -149,8 +149,9 @@ export async function resolveToken(client: NansenClient, input: string, chain?: 
   const all: Candidate[] = (res.tokens ?? [])
     .filter((t) => isChain(t.chain))
     .map((t) => ({ symbol: t.symbol, name: t.name, chain: t.chain as Chain, address: t.address, marketCap: t.market_cap ?? null, rank: t.rank ?? null }));
+  // exact symbol/name (or address) matches only: a typo must never silently map onto Nansen's fuzzy top hit and spend ~120
+  // credits on the wrong token (review pass 1, 2026-09-18) — the error lists what Nansen did find instead
   let pool = isAddr ? all.filter((t) => lc(t.address) === lc(q)) : all.filter((t) => lc(t.symbol) === lc(q) || lc(t.name) === lc(q));
-  if (!pool.length && !isAddr) pool = all; // no exact symbol match — fall back to whatever Nansen ranked for this text
   if (chain) pool = pool.filter((t) => t.chain === chain);
   if (!pool.length) {
     if (isAddr && chain && (EVM_ADDRESS.test(q) ? chain !== "solana" : chain === "solana")) {
@@ -160,9 +161,12 @@ export async function resolveToken(client: NansenClient, input: string, chain?: 
         candidates: all,
       };
     }
+    const near = all.slice(0, 3).map((t) => `${t.symbol} on ${t.chain}`);
     throw new AtlasError(
       "no-token",
-      isAddr ? `no token at ${q}${chain ? ` on ${chain}` : " — add --chain"}` : `no token named "${q}" on a supported chain`,
+      isAddr
+        ? `no token at ${q}${chain ? ` on ${chain}` : " — add --chain"}`
+        : `no token named "${q}"${chain ? ` on ${chain}` : " on a supported chain"}${near.length ? ` — Nansen's closest: ${near.join(", ")}` : ""}`,
       all,
     );
   }
@@ -303,7 +307,17 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     settle(nansen.holders(client, chain, token.address, HOLDERS_PAGE)),
     settle(nansen.exchangeHolders(client, chain, token.address, HOLDERS_PAGE)),
   ]);
-  if (!h.ok) throw new Error(`tgm/holders failed: ${h.error}`);
+  if (!h.ok) {
+    // a 4xx from holders is Nansen saying "not a token here" (burn address, malformed address, unsupported pair) — a no-token
+    // state for the page and the CLI, not a 502 (live QA, 2026-09-18)
+    if (/^HTTP 4\d\d/.test(h.error))
+      throw new AtlasError(
+        "no-token",
+        `Nansen has no holders for ${token.symbol} on ${chain}: ${h.error.replace(/^HTTP \d+: /, "").replace(/^\{"error":"([^"]+)".*$/, "$1")}`,
+        candidates,
+      );
+    throw new Error(`tgm/holders failed: ${h.error}`);
+  }
   if (!x.ok) warnings.push(`exchange-holder call failed (${x.error}) — custody wallets could not be separated from people`);
   const exchangeSet = new Set(
     (x.ok ? x.data.data : []).map((r) => (r.address ? (r.address.startsWith("0x") ? lc(r.address) : r.address) : "")).filter(Boolean),
