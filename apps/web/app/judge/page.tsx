@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "The claim, the 30-second path, the receipts, the real reproduce command, and the honest limitations.",
 };
 
-const TEST_COUNT = 145;
+const TEST_COUNT = 155;
 const CLEAN_CLONE_S = "54";
 
 export default function Judge() {
@@ -37,7 +37,7 @@ export default function Judge() {
               <code>{SITE}/?q=PEPE&amp;chain=ethereum</code>
             </a>
             . Rows stream in — each wallet gains its exchange (🏦 Coinbase, 🏦 Upbit, 🏦 Binance…) — the map fills country by country, the bar re-sorts, the
-            number counts to <b>40.4 %</b>: US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 48 % on global exchanges in grey. Cold ≈ 40 s, cached ≈ 0 s.
+            number counts to <b>40.4 %</b>: US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40–60 s, cached ≈ 0 s.
           </li>
           <li>
             Click <b>WLFI</b> — the Korean contrast: Upbit holds half the analysed supply → <b>55 %</b>, KR 52. Then <b>DEGEN · base</b>: Coinbase → US 54.
@@ -65,7 +65,7 @@ export default function Judge() {
               <th>Hero query, live</th>
               <td>
                 <code>PEPE</code> on ethereum: 100 holders fetched · 12 custody + 40 people examined ·{" "}
-                <b>40.4 % placed · 115 credits · 108 calls · 40.3 s cold · 7 ms warm</b> · 2026-09-18 · atlas <code>241f4d6ce145</code> — output verbatim in{" "}
+                <b>40.4 % placed · 117 credits · 110 calls · 57.3 s cold · 7 ms warm</b> · 2026-09-18 · atlas <code>241f4d6ce145</code> — output verbatim in{" "}
                 <a href={`${REPO}/blob/main/DEMO.md`}>DEMO.md</a>
               </td>
             </tr>
@@ -94,8 +94,9 @@ export default function Judge() {
             <tr>
               <th>Tests</th>
               <td>
-                <b>{TEST_COUNT} tests</b> (vitest): every label string seen live pinned to its key; the arithmetic property-tested; offline replay = same hash;
-                the USDC timeout path; the route boundary (generated garbage → 400, zero fetches); the key never reaches a client
+                <b>{TEST_COUNT} tests</b> (vitest): every label string seen live pinned to its key; the arithmetic property-tested (14,000 generated cases);
+                offline replay = same hash; the page&rsquo;s stream reducer driven by replayed fixtures; the USDC timeout path; the route boundary (10,000
+                generated garbage queries → 400, zero fetches); the key never reaches a client
               </td>
             </tr>
             <tr>
@@ -132,8 +133,8 @@ npm run holderatlas -- PEPE --chain ethereum --explain     # every wallet, every
             has no Solana support; holders and CEX transfers work there, so the custody share is shown with every exchange &ldquo;unnamed&rdquo; and 0 % placed.
           </li>
           <li>
-            <b>Supply-weighted means whales decide.</b> LINK&rsquo;s analysed supply is 96 % one 2017 team wallet with no exchange trace → 4 % placed. The
-            wallet-weighted share is printed beside the number for exactly this reason.
+            <b>Supply-weighted means whales decide.</b> 86 % of LINK&rsquo;s analysed supply is one 2017 team wallet with no exchange trace → 4 % placed. The
+            wallet-weighted share (44 %) is printed beside the number for exactly this reason.
           </li>
           <li>
             <b>Countries are exchange jurisdictions, not people.</b> A Coinbase withdrawal is &ldquo;US&rdquo; the way a Coinbase account is; Kraken is treated

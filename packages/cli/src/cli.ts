@@ -100,11 +100,16 @@ if (a.otherEntity.wallets)
   );
 if (a.unnamed.wallets)
   console.log(
-    `${Y}${bar(a.unnamed.share)}${X} ${D}??  ${pct(a.unnamed.share).padStart(6)}  exchanges Nansen cannot name on ${a.chain} · ${a.unnamed.wallets} wallets${X}`,
+    `${Y}${bar(a.unnamed.share)}${X} ${D}??  ${pct(a.unnamed.share).padStart(6)}  ${a.naming ? "exchange transfer found, no entity label on the lookup" : `exchanges Nansen cannot name on ${a.chain}`} · ${a.unnamed.wallets} wallet${a.unnamed.wallets === 1 ? "" : "s"}${X}`,
   );
 if (a.untraced.wallets)
-  console.log(`${D}${bar(a.untraced.share)} ··  ${pct(a.untraced.share).padStart(6)}  no exchange trace in 1 year · ${a.untraced.wallets} wallets${X}`);
-if (a.errors.wallets) console.log(`${R}${bar(a.errors.share)} !!  ${pct(a.errors.share).padStart(6)}  lookup failed · ${a.errors.wallets} wallets${X}`);
+  console.log(
+    `${D}${bar(a.untraced.share)} ··  ${pct(a.untraced.share).padStart(6)}  no exchange trace in 1 year · ${a.untraced.wallets} wallet${a.untraced.wallets === 1 ? "" : "s"}${X}`,
+  );
+if (a.errors.wallets)
+  console.log(
+    `${R}${bar(a.errors.share)} !!  ${pct(a.errors.share).padStart(6)}  lookup failed · ${a.errors.wallets} wallet${a.errors.wallets === 1 ? "" : "s"}${X}`,
+  );
 console.log(
   `\n${D}analysed ${a.examined.custody + a.examined.human} of ${a.holdersFetched} top holders = ${pct(a.coverage)} of their supply · exchange custody ${pct(a.custodyShare)} · pools/contracts excluded ${pct(a.structuralShare)} · countries = ${a.countries.map((c) => countryName(c.code)).join(", ") || "none"}${X}`,
 );

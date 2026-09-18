@@ -64,21 +64,28 @@ the hash says so. `npm run bench` (docs/BENCH.md) shows the warm run of each col
 ```
 WLFI World Liberty Financial · ethereum · 0xda5e1988097297dcdc1f90d4dfe7909e847cbef6
 
-55.2% of analysed supply placed on a country (20.0% of wallets)
+55.2% of analysed supply placed on a country (19.6% of wallets)
 
-████████████░░░░░░░░░░░░ KR   52.5%  2 wallets · upbit
+█████████████░░░░░░░░░░░ KR   52.5%  3 wallets · bithumb, upbit
 █░░░░░░░░░░░░░░░░░░░░░░░ US    2.7%  7 wallets · coinbase, kraken, robinhood
-████░░░░░░░░░░░░░░░░░░░░ --   18.8%  global exchanges, no location by design · binance, bybit, gate, mexc, okx
-░░░░░░░░░░░░░░░░░░░░░░░░ ??    0.1%  entities not in exchanges.json · 🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool [0x4637ea]
+█████░░░░░░░░░░░░░░░░░░░ --   18.8%  global exchanges, no location by design · binance, bitget, bybit, mexc, okx
+░░░░░░░░░░░░░░░░░░░░░░░░ ??    0.1%  entities not in exchanges.json · 🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool  [0x4637ea]
 ██████░░░░░░░░░░░░░░░░░░ ··   25.9%  no exchange trace in 1 year · 27 wallets
+
+analysed 51 of 100 top holders = 92.8% of their supply · exchange custody 4.8% · pools/contracts excluded 5.7% · countries = South Korea, United States
+⚠ entities not in exchanges.json (counted as unattributed): 🤖 🏦 Uniswap: V3 USD1-WLFI (0.3%) Liquidity Pool  [0x4637ea]
+0 credits · 114 calls (114 cached, as of 2026-09-18 11:26 UTC) · 0.0s · atlas 52d76f523a9e
 ```
-(from `fixtures/WLFI--ethereum.json`, recorded live 2026-09-18 10:08 UTC, 120 credits)
+(the warm run of `fixtures/WLFI--ethereum.json`, recorded live 2026-09-18 11:26 UTC at 120 credits / 113 live calls; one of the
+40 examined "people" was a contract — `related-wallets` said "Deployed by" — so 51 wallets are in the number)
 
 ## The honest states
-- `npm run holderatlas -- MEW --chain solana` → `0.0%` · a hatched **UNNAMED 90.3 %** bar · warning: *solana: Nansen's transfer
-  lookup (the only ≤5-credit field that names an exchange) has no solana support — exchanges are counted but unnamed*.
-- `npm run holderatlas -- USDC --chain ethereum` → `9.6%` · warning: *Nansen's per-wallet transfer filter timed out on USDC over
-  1 year — the exchange-trace window is 30 days for this token*.
+- `npm run holderatlas -- MEW --chain solana` → `0.0%` · a hatched **UNNAMED 90.7 %** bar (26 wallets) · warning: *solana: Nansen's
+  transfer lookup (the only ≤5-credit field that names an exchange) has no solana support — exchanges are counted but unnamed*
+  · one wallet's transfer call timed out → `!! 0.5% lookup failed`, never guessed (`fixtures/MEW--solana.json`, 11:34 UTC, 93 credits).
+- `npm run holderatlas -- USDC --chain ethereum` → `15.9%` (US, Coinbase + Kraken) · `✗ tgm/transfers — timeout` on the 1-year probe ·
+  warning: *Nansen's per-wallet transfer filter timed out on USDC over 1 year — the exchange-trace window is 30 days for this
+  token* (`fixtures/USDC--ethereum.json`, 11:28 UTC, 122 credits; the timeout is stored in the fixture and replayed as a timeout).
 - `npm run holderatlas -- XQZPLM` → `no token named "XQZPLM" on a supported chain` (exit 3, 0 credits).
 - `npm run holderatlas -- 0x6982508145454ce325ddbe47a25d4ec3d2311933 --chain ethereum` → the PEPE atlas, same hash as the ticker.
 

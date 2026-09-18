@@ -52,18 +52,22 @@ atlasHash      = sha256({token, rows: [address, kind, exchange, country, bucket,
 Latency, credits and label text are display, not decision — a cached replay and a live run that reach the same attribution
 hash identically (`npm run verify`, 12/12).
 
-## Live numbers (2026-09-18, defaults 12 + 40)
-| Token | attributable | by wallets | custody | global | untraced | countries | credits |
+## Live numbers (2026-09-18, defaults 12 + 40 — read from the recorded fixtures, `npm run verify` reproduces every row)
+| Token | attributable | by wallets | custody | global | untraced | countries (exchanges seen) | credits |
 |---|---|---|---|---|---|---|---|
-| PEPE / ethereum | **40.4 %** | 34.6 % | 71.9 % | 47.3 % | 12.3 % | US 24.1 (13 w: coinbase, kraken, robinhood) · KR 9.5 (bithumb, upbit) · GB 3.4 (revolut) · TR 3.1 (btcturk) · NL 0.3 (bitvavo) | 117 |
-| WLFI / ethereum | **55.2 %** | 20 % | 4.7 % | 18.8 % | 25.9 % | KR 52.5 (upbit) · US 2.7 | 120 |
-| DEGEN / base | **58.1 %** | 28.6 % | 42.1 % | 35.2 % | 6.0 % | US 54.5 (coinbase) · GB 2.4 · NL 1.2 | 121 |
-| MOG / ethereum | **33.2 %** | — | — | — | — | US 16.6 · GB 9.8 · NL 5.1 · AT 1.7 | 116 |
-| ARB / arbitrum | **49.1 %** | — | — | — | — | US 32.1 · KR 14.8 · TR 2.2 | 118 |
-| LINK / ethereum | 4.0 % | 37.5 % | 3.6 % | 2.4 % | **94.1 %** (one 2017 team EOA) | US 3.3 · KR 0.6 · AT 0.1 | 91 |
-| USDC / ethereum | 9.6 % (30-day window) | 2.8 % | 41 % | 0 | — | US 9.6 (Coinbase Prime) | 96 |
-| CAKE / bnb | 0.8 % | — | — | — | — | KR 0.4 · NL 0.4 | 120 |
-| MEW, PENGU / solana | **0 %** | 0 | 44.6 % | — | 9.7 % | none — 90 % "unnamed" (no Solana in the lookup) | 74–95 |
+| PEPE / ethereum | **40.4 %** | 34.6 % | 71.9 % | 47.3 % | 12.3 % | US 24.1 (coinbase, kraken, robinhood) · KR 9.5 (bithumb, upbit) · GB 3.4 (revolut) · TR 3.1 (btcturk) · NL 0.3 (bitvavo) | 117 |
+| WLFI / ethereum | **55.2 %** | 19.6 % | 4.8 % | 18.8 % | 25.9 % | KR 52.5 (bithumb, upbit) · US 2.7 (coinbase, kraken, robinhood) | 120 |
+| DEGEN / base | **58.1 %** | 25.5 % | 43.1 % | 34.5 % | 7.2 % | US 54.5 (coinbase, kraken) · GB 2.4 (revolut) · NL 1.2 (bitvavo) | 121 |
+| MOG / ethereum | **33.2 %** | 13.7 % | 59.1 % | 32.5 % | 33.7 % | US 16.6 (kraken) · GB 9.8 (revolut) · NL 5.1 (bitvavo) · AT 1.7 (bitpanda) | 116 |
+| ARB / arbitrum | **49.1 %** | 33.3 % | 53.7 % | 30.0 % | 21.0 % | US 32.1 (coinbase, kraken, robinhood) · KR 14.8 (bithumb, upbit) · TR 2.1 (btcturk) | 118 |
+| LINK / ethereum | 4.0 % | 44.2 % | 3.8 % | 2.5 % | **93.5 %** (86 % of it one 2017 team EOA) | US 3.3 (coinbase, gemini, kraken, robinhood) · KR 0.6 (upbit) · AT 0.1 (bitpanda) | 117 |
+| USDC / ethereum | 15.9 % (30-day window) | 20.4 % | 40.0 % | 44.3 % | 39.4 % | US 15.9 (coinbase, kraken) | 122 |
+| CAKE / bnb | 0.8 % | 3.9 % | 78.9 % | 52.6 % | 32.9 % | KR 0.4 (bithumb) · NL 0.4 (bitvavo) | 121 |
+| MEW / solana | **0 %** | 0 | 44.3 % | — | 8.7 % | none — 90.7 % "unnamed" (no Solana in the lookup) | 93 |
+| PENGU / solana | **0 %** | 0 | 38.1 % | — | 37.6 % | none — 62.4 % "unnamed" | 95 |
+
+Rows whose contract check reclassified a mega-holder (ARB, CAKE, MOG, WLFI: 1 each · USDC: 3 · DEGEN: 5) analyse 51 / 49 / 47
+of the 52 examined wallets — the caption and the by-wallets denominator count what is in the number, not what was looked up.
 
 Day-one spike (10 + 30 wallets, 6 tokens): median **40.6 %** on the five EVM tokens.
 

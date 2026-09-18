@@ -89,7 +89,13 @@ export function barRows(d: PosterData): BarRow[] {
   };
   b("global", "GLOBAL", `global exchanges, no location by design · ${d.global.exchanges.join(", ")}`, d.global, "global");
   b("other", "ENTITY", `named entities not in the exchange table · ${d.otherEntity.exchanges.join(", ")}`, d.otherEntity, "other");
-  b("unnamed", "UNNAMED", `exchanges Nansen cannot name on ${d.chain}`, d.unnamed, "unnamed");
+  b(
+    "unnamed",
+    "UNNAMED",
+    d.naming ? "exchange transfer found, but the lookup carried no entity label" : `exchanges Nansen cannot name on ${d.chain}`,
+    d.unnamed,
+    "unnamed",
+  );
   b("untraced", "NO TRACE", "no exchange transfer of this token in a year", d.untraced, "untraced");
   b("error", "FAILED", "lookup timed out or failed — never guessed", d.errors, "error");
   return rows;

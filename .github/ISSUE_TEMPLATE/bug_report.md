@@ -9,13 +9,13 @@ labels: bug
 A clear description of what the bug is.
 
 **To reproduce**
-The ticker and chain filter, and whether it was the CLI (`npm run whichone -- <ticker>`) or the web app.
+The ticker and chain, and whether it was the CLI (`npm run holderatlas -- <ticker> --chain <chain>`) or the web app.
 
 **Expected behavior**
-Which card should be green / red / grey, and why.
+Which wallet should have been placed where (or left grey), and why — e.g. the exchange label you saw and the country you expected.
 
-**Verdict hash**
-From the provenance drawer or the last line of the CLI output (lets us replay the exact decision).
+**Atlas hash**
+From the provenance drawer or the last line of the CLI output (lets us replay the exact attribution).
 
 **Environment**
 - OS:
