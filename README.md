@@ -26,6 +26,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
 [![CI](https://github.com/edycutjong/holderatlas/actions/workflows/ci.yml/badge.svg)](https://github.com/edycutjong/holderatlas/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/edycutjong/holderatlas/actions/workflows/codeql.yml/badge.svg)](https://github.com/edycutjong/holderatlas/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/edycutjong/holderatlas?sort=semver&style=flat)](https://github.com/edycutjong/holderatlas/releases/latest)
 
 </div>
 
@@ -172,6 +173,8 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 ## 🧪 Testing & CI
 
 **5-stage pipeline:** Quality (Prettier · ESLint · tsc · vitest + coverage · offline replay · readiness) → Security (TruffleHog, npm audit; CodeQL and gitleaks in their own workflows) → Build → E2E smoke of every route without a key → Deploy gate. No API key anywhere in CI.
+
+**Releases:** semantic versions from Conventional Commits — `feat:` → minor, `fix:`/`perf:` → patch, `!`/`BREAKING CHANGE` → major, anything else → no release. `release.yml` runs the algorithm after a green pipeline on `main`; `npm run release` (`--dry-run` to preview) runs the same algorithm locally when Actions cannot: bumps every `package.json` + lockfile, commits `chore(release): vX.Y.Z [skip ci]`, tags, pushes and publishes the [GitHub Release](https://github.com/edycutjong/holderatlas/releases/latest). The footer of every page reads the version from `package.json`, so the deployed site always names its release.
 
 ```bash
 npm run lint && npm run format:check && npm run typecheck

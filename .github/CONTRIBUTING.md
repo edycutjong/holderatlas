@@ -18,7 +18,17 @@ Thanks for your interest in improving Holder Atlas! 🎉
   `npm run seed -- <TOKEN>` (live credits — say how many in the PR) and never edit a recorded response by hand.
 - A new exchange goes into `packages/core/src/exchanges.json` with a `source` (regulator licence, HQ, or dominant-market evidence)
   and a test in `labels.test.ts` pinning the exact Nansen label string to its key. Global exchanges are `"global"`, never a country.
-- Keep commits conventional: `feat:`, `fix:`, `docs:`, `test:`, `ci:`, `chore:`.
+- Keep commits conventional: `feat:` (minor), `fix:`/`perf:` (patch), `docs:`, `test:`, `ci:`, `chore:` (no release);
+  a `!` after the type or a `BREAKING CHANGE:` footer is a major. Releases are cut from these prefixes automatically.
+
+## Releases
+Versions follow [SemVer](https://semver.org) and are derived from the commit log since the last `v*` tag — nobody edits
+`version` by hand. Two paths run the same algorithm (`scripts/release.mjs` mirrors `.github/workflows/release.yml`):
+- **CI:** `release.yml` runs after the CI/CD pipeline passes on `main` (or on `workflow_dispatch`).
+- **Local:** `npm run release` from a clean `main` — `npm run release -- --dry-run` shows the decision first.
+Both bump the root and every workspace `package.json` plus `package-lock.json` (`scripts/bump-version.mjs`, offline; `npm ci`
+proves the lockfile), commit `chore(release): vX.Y.Z [skip ci]`, push an annotated tag and publish a GitHub Release with
+generated notes. The site footer reads `package.json`, so a deploy after the release shows the new version.
 
 ## Credits are the constraint
 Every live Nansen call costs credits (table in `packages/core/src/client.ts`). Cached calls are free and labelled.
