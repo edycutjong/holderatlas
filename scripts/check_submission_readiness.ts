@@ -27,7 +27,6 @@ const MUST = [
   "docs/BENCH.md",
   "docs/DX-REPORT.md",
   ".github/workflows/ci.yml",
-  ".github/workflows/codeql.yml",
   ".github/workflows/gitleaks.yml",
   ".github/workflows/release.yml",
   ".github/dependabot.yml",
