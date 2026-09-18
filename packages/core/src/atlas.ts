@@ -19,8 +19,10 @@ export type WalletRow = {
   /** free Nansen label on the holder row (a wealth tag, a pool name, an ENS…) */
   label: string | null;
   supply: number;
-  /** share of the ANALYSED supply (examined custody + human rows) */
+  /** share of the ANALYSED supply (examined custody + human rows) — final only after every row is in */
   share: number;
+  /** share of the whole top-N supply fetched — fixed from the start, what the streaming rows show */
+  topShare: number;
   /** the 🏦 entity label read from the transfer lookup, verbatim */
   entityLabel: string | null;
   /** table key, e.g. "upbit" */
@@ -76,7 +78,17 @@ export type Atlas = {
 
 export type AtlasEvent =
   | { type: "token"; token: Token; candidates: Candidate[] }
-  | { type: "holders"; fetched: number; custody: number; human: number; structural: number; examined: { custody: number; human: number } }
+  | {
+      type: "holders";
+      fetched: number;
+      custody: number;
+      human: number;
+      structural: number;
+      examined: { custody: number; human: number };
+      /** known before any lookup: what the caption can show while streaming */ coverage: number;
+      structuralShare: number;
+      custodyShare: number;
+    }
   | {
       type: "wallet";
       row: WalletRow;
@@ -300,6 +312,7 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
   const totalSupply = parts.reduce((n, p) => n + p.supply, 0);
   const custodyRows = parts.filter((p) => p.kind === "custody").slice(0, opts.custody ?? DEFAULT_CUSTODY);
   const humanRows = parts.filter((p) => p.kind === "human").slice(0, opts.holders ?? DEFAULT_HOLDERS);
+  const examinedSupply0 = [...custodyRows, ...humanRows].reduce((n, p) => n + p.supply, 0);
   emit({
     type: "holders",
     fetched: parts.length,
@@ -307,13 +320,18 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     human: parts.filter((p) => p.kind === "human").length,
     structural: parts.filter((p) => p.kind === "structural").length,
     examined: { custody: custodyRows.length, human: humanRows.length },
+    coverage: totalSupply > 0 ? examinedSupply0 / totalSupply : 0,
+    structuralShare: totalSupply > 0 ? parts.filter((p) => p.kind === "structural").reduce((n, p) => n + p.supply, 0) / totalSupply : 0,
+    custodyShare: examinedSupply0 > 0 ? custodyRows.reduce((n, p) => n + p.supply, 0) / examinedSupply0 : 0,
   });
 
+  const topShareOf = (supply: number) => (totalSupply > 0 ? supply / totalSupply : 0);
   const rows: WalletRow[] = parts
     .filter((p) => p.kind === "structural")
     .map((p) => ({
       ...p,
       share: 0,
+      topShare: topShareOf(p.supply),
       entityLabel: null,
       exchange: null,
       country: null,
@@ -350,6 +368,7 @@ export async function atlas(client: NansenClient, input: string, opts: AtlasOpti
     const row: WalletRow = {
       ...p,
       share: 0,
+      topShare: topShareOf(p.supply),
       entityLabel: null,
       exchange: null,
       country: null,

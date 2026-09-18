@@ -25,6 +25,7 @@ const rowArb: fc.Arbitrary<WalletRow> = fc
     label: null,
     supply: r.supply,
     share: 0,
+    topShare: 0,
     entityLabel: null,
     exchange: r.bucket === "country" ? "x-" + r.country.toLowerCase() : r.bucket === "global" ? "binance" : null,
     country: r.bucket === "country" ? r.country : r.bucket === "global" ? "global" : null,

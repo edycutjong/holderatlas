@@ -115,11 +115,13 @@ describe("exchangeLabelFor — which side of the transfer names the exchange", (
 });
 
 function row(o: Partial<WalletRow> & { supply: number }): WalletRow {
+  // topShare is display-only; tests that build rows by hand leave it 0
   return {
     address: addr(1),
     kind: "human",
     label: null,
     share: 0,
+    topShare: 0,
     entityLabel: null,
     exchange: null,
     country: null,
@@ -130,7 +132,7 @@ function row(o: Partial<WalletRow> & { supply: number }): WalletRow {
     calls: 0,
     credits: 0,
     ...o,
-  };
+  } as WalletRow;
 }
 
 describe("aggregate — the arithmetic behind the number", () => {

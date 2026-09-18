@@ -391,7 +391,9 @@ function Row({ r }: { r: WalletRow }) {
         ) : null}{" "}
         {where}
       </span>
-      <span className="share">{pct(r.share, 2)}</span>
+      <span className="share" title="share of the top-100 supply">
+        {pct(r.topShare, 2)}
+      </span>
     </div>
   );
 }

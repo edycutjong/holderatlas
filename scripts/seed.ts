@@ -56,7 +56,8 @@ let totalCredits = 0,
 for (const f of set) {
   // A fresh in-memory store per fixture: every response is fetched live and lands in the file, nothing is shared.
   const store = new MemoryCache();
-  const client = new CachedNansenClient(apiKey, { store: reuse ? new Layered(store, new DiskCache(".cache")) : store });
+  // 24 h TTL: with --reuse-cache, anything fetched today is a hit (the default 30 min silently refetched — and re-billed — every token)
+  const client = new CachedNansenClient(apiKey, { store: reuse ? new Layered(store, new DiskCache(".cache")) : store, ttlMs: 24 * 3600 * 1000 });
   const now = Date.now();
   let a: Atlas;
   try {

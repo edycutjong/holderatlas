@@ -261,8 +261,8 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
           );
         })}
         {!d.naming ? (
-          <text x={WORLD_W / 2} y={WORLD_H / 2} textAnchor="middle" fontSize="26" fontWeight="700" fill={C.warn}>
-            {d.chain}: exchanges are visible but cannot be named on this API path — nothing can be placed
+          <text x={WORLD_W / 2} y={WORLD_H / 2} textAnchor="middle" fontSize="24" fontWeight="700" fill={C.warn}>
+            {d.chain}: exchanges visible but unnamed on this API path — nothing placed
           </text>
         ) : d.countries.length === 0 && !streaming ? (
           <text x={WORLD_W / 2} y={WORLD_H / 2} textAnchor="middle" fontSize="26" fontWeight="700" fill={C.muted}>
@@ -319,7 +319,7 @@ export function Poster({ d, id = "poster", interactive = false }: { d: PosterDat
           {streaming ? "waiting for the first wallet…" : "nothing analysed"}
         </text>
       ) : null}
-      <text x={barX - 140} y={barTop + rows.length * rowH + 22} fontSize="14" fill={C.muted}>
+      <text x={barX - 140} y={barTop + Math.max(1, rows.length) * rowH + 22} fontSize="14" fill={C.muted}>
         green = placed on a country · grey = global exchange or no trace
       </text>
     </svg>
