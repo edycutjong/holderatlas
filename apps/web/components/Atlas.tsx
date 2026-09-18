@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Poster, pct, toPoster, type PosterData } from "./Poster";
+import { Poster, pct, toPoster, barRows, type PosterData } from "./Poster";
 import { Drawer } from "./Drawer";
 import { Example, HowItDecides } from "./Example";
 import { svgToPngBlob, download } from "@/lib/png";
@@ -249,6 +249,17 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
           <div className={`picture ${phase === "streaming" ? "streaming" : phase === "done" ? "done" : ""}`} ref={posterRef}>
             <Poster d={live.data} interactive />
           </div>
+          <ul className="bars-mobile" aria-label="where the analysed supply is">
+            {barRows(live.data).map((r) => (
+              <li key={r.key} className={r.kind}>
+                <b>{r.label}</b>
+                <i style={{ width: `${Math.round(r.share * 100)}%` }} />
+                <span>
+                  {pct(r.share)} · {r.wallets} w
+                </span>
+              </li>
+            ))}
+          </ul>
           <div className="picture-actions">
             <button className="btn primary" onClick={savePng} disabled={phase !== "done"}>
               Save PNG

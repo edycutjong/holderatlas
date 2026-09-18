@@ -233,3 +233,13 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 .link-quiet { color: var(--text-2); }
 .link-quiet:hover, .link-quiet:focus-visible { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .card, .drawer, .bar > i, .progress > i, .picture, .picture *, .row { transition: none !important; animation: none !important; } }
+.bars-mobile { display: none; list-style: none; padding: 0; margin: 10px auto 0; max-width: var(--wrap); }
+.bars-mobile li { display: grid; grid-template-columns: 74px 1fr auto; gap: 8px; align-items: center; font-size: 13px; padding: 4px 0; }
+.bars-mobile b { font-weight: 800; }
+.bars-mobile i { display: block; height: 14px; border-radius: 0 4px 4px 0; background: var(--real); min-width: 3px; }
+.bars-mobile li.global i, .bars-mobile li.other i { background: var(--muted); }
+.bars-mobile li.untraced i { background: #3d4a58; }
+.bars-mobile li.unnamed i { background: repeating-linear-gradient(45deg, #5b6b7b 0 3px, #3d4a58 3px 6px); }
+.bars-mobile li.error i { background: transparent; border: 1px solid var(--impostor); }
+.bars-mobile span { color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+@media (max-width: 640px) { .bars-mobile { display: block; } }
