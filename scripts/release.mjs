@@ -1,7 +1,7 @@
 // release.mjs [--dry-run] — the release.yml algorithm, run locally (GitHub Actions is billing-blocked on this account).
 //   last v* tag → Conventional Commits since it: "!" / BREAKING CHANGE → major · feat → minor · fix/perf → patch · else no release
 //   → bump every package.json + package-lock.json (scripts/bump-version.mjs) → `npm ci --ignore-scripts` proves the lockfile
-//   → commit "chore(release): vX.Y.Z [skip ci]" → annotated tag → push main + tag → `gh release create vX.Y.Z --generate-notes`.
+//   → commit "chore(release): vX.Y.Z" → annotated tag → push main + tag → `gh release create vX.Y.Z --generate-notes`.
 // No dependencies. Refuses to run on a dirty tree or off main. `--dry-run` prints the decision and touches nothing.
 import { execFileSync } from "node:child_process";
 import process from "node:process";
@@ -55,7 +55,7 @@ sh("node", ["scripts/bump-version.mjs", next.slice(1)], { stdio: "inherit" });
 sh("npm", ["ci", "--ignore-scripts", "--no-audit", "--no-fund"], { stdio: ["ignore", "ignore", "inherit"] }); // proves the lockfile still satisfies npm ci
 process.stdout.write(git("diff", "--stat", "--", "package.json", "package-lock.json", "apps/*/package.json", "packages/*/package.json") + "\n");
 git("add", "-A");
-git("commit", "-q", "-m", `chore(release): ${next} [skip ci]`);
+git("commit", "-q", "-m", `chore(release): ${next}`);
 git("tag", "-a", next, "-m", next);
 git("push", "-q", "origin", "HEAD:main");
 git("push", "-q", "origin", next);

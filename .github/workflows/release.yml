@@ -3,7 +3,9 @@ name: release
 # Automatic semantic versioning from Conventional Commits, gated on the CI/CD pipeline passing on main:
 #   feat: → minor · fix:/perf: → patch · "!" or BREAKING CHANGE → major · anything else → no release.
 # On a release: bump every package.json (root, apps/web, packages/*), commit "chore(release): vX.Y.Z [skip ci]",
-# tag that commit, publish a GitHub Release with generated notes. The [skip ci] keeps the bump from re-running CI.
+# tag that commit, publish a GitHub Release with generated notes, then deploy THAT commit to production so the live
+# footer always equals the latest tag. (A push made with GITHUB_TOKEN never triggers the CI/CD workflow, so the deploy
+# has to happen here; the gates already passed on the commit being released.)
 on:
   workflow_run:
     workflows: ["CI/CD Pipeline"]
@@ -75,3 +77,17 @@ jobs:
           git push origin "${NEXT}"
           gh release create "${NEXT}" --generate-notes --title "${NEXT}"
           echo "## Released ${NEXT} (${{ steps.ver.outputs.bump }})" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Deploy the released commit to production (footer == tag)
+        if: steps.ver.outputs.skip == 'false'
+        env:
+          VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+        run: |
+          set -euo pipefail
+          npm i -g vercel@latest >/dev/null 2>&1
+          vercel pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          vercel build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          URL=$(vercel deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}")
+          vercel alias set "$URL" holderatlas-edycutjong.vercel.app --token="${{ secrets.VERCEL_TOKEN }}"
+          echo "Deployed ${{ steps.ver.outputs.next }} → $URL (https://holderatlas.edycu.dev)" >> "$GITHUB_STEP_SUMMARY"
