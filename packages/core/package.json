@@ -1,6 +1,6 @@
 {
   "name": "@holderatlas/core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Holder geography from Nansen exchange entity labels: holders → exchange → country → % attributable.",
   "license": "MIT",
   "type": "module",
