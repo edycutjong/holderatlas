@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { SITE } from "../components/Shell";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL || "https://holderatlas.edycu.dev"),
+  metadataBase: new URL(SITE),
   title: "Holder Atlas — where a token's holders actually are",
   description:
     "Type a token. One world map of the countries its holders reach exchanges from, inferred from Nansen exchange entity labels, with the honest % of supply the map covers.",
