@@ -65,7 +65,7 @@ export default function Judge() {
               <th>Hero query, live</th>
               <td>
                 <code>PEPE</code> on ethereum: 100 holders fetched · 12 custody + 40 people examined ·{" "}
-                <b>40.4 % placed · 115 credits · 108 calls · 40.3 s cold · 7 ms warm</b> · 2026-09-18 · atlas <code>4d9f7611a988</code> — output verbatim in{" "}
+                <b>40.4 % placed · 115 credits · 108 calls · 40.3 s cold · 7 ms warm</b> · 2026-09-18 · atlas <code>241f4d6ce145</code> — output verbatim in{" "}
                 <a href={`${REPO}/blob/main/DEMO.md`}>DEMO.md</a>
               </td>
             </tr>

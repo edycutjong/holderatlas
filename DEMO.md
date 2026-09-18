@@ -51,9 +51,9 @@ calls:
   transaction-with-token-transfer-lookup    29 calls    29 cr  0 cached  2007 ms avg live
 ```
 
-The atlas hash differs from the fixture's (`4d9f7611a988`, recorded 10:03 UTC): one wallet's newest exchange transfer changed
-between the two runs — live data moves, and the hash says so. `npm run bench` (docs/BENCH.md) shows the warm run of each cold
-run hashing identically.
+`fixtures/PEPE--ethereum.json` holds exactly this run's responses and hash (`241f4d6ce145`). The first recording of the day
+(10:03 UTC, `4d9f7611a988`) differed by one wallet whose newest exchange transfer changed in between — live data moves, and
+the hash says so. `npm run bench` (docs/BENCH.md) shows the warm run of each cold run hashing identically.
 
 ## Warm run — same command without `--no-cache`, seconds later
 ```

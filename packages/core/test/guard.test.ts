@@ -6,6 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { NextRequest } from "next/server";
+import { readFileSync } from "node:fs";
 import { GET as atlasRoute } from "@/app/api/atlas/route";
 import {
   ipAllowed,
@@ -75,7 +76,7 @@ describe("fixture replay", () => {
     expect(r!.atlas.warnings).toContain(BUDGET_MESSAGE);
     expect(r!.atlas.warnings.filter((w) => w === BUDGET_MESSAGE)).toHaveLength(1);
     expect(r!.atlas.calls.every((c) => c.cached)).toBe(true);
-    expect(r!.atlas.hash).toBe("4d9f7611a988");
+    expect(r!.atlas.hash).toBe(JSON.parse(readFileSync("fixtures/PEPE--ethereum.json", "utf8")).atlas.hash);
     const last = events.at(-1) as { type: string; atlas?: { warnings: string[] } };
     expect(last.type).toBe("atlas");
     expect(last.atlas?.warnings).toContain(BUDGET_MESSAGE);
