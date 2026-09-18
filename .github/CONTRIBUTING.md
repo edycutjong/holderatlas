@@ -27,7 +27,7 @@ Versions follow [SemVer](https://semver.org) and are derived from the commit log
 - **CI:** `release.yml` runs after the CI/CD pipeline passes on `main` (or on `workflow_dispatch`).
 - **Local:** `npm run release` from a clean `main` — `npm run release -- --dry-run` shows the decision first.
 Both bump the root and every workspace `package.json` plus `package-lock.json` (`scripts/bump-version.mjs`, offline; `npm ci`
-proves the lockfile), commit `chore(release): vX.Y.Z [skip ci]`, push an annotated tag and publish a GitHub Release with
+proves the lockfile), commit `chore(release): vX.Y.Z`, push an annotated tag and publish a GitHub Release with
 generated notes. The site footer reads `package.json`, so a deploy after the release shows the new version.
 
 ## Credits are the constraint
