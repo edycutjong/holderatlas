@@ -1,0 +1,27 @@
+.env
+.env.*
+node_modules/
+__pycache__/
+.next/
+dist/
+coverage/
+.DS_Store
+.cache/
+*.tsbuildinfo
+.vercel/
+.vercel
+
+# Environment templates stay; real env files never
+!.env.example
+
+# Generated assets
+/assets/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+
+# Lighthouse
+.lighthouseci/

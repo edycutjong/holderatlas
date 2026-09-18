@@ -1,0 +1,13 @@
+# generated or recorded artefacts — never reformatted
+node_modules/
+.next/
+coverage/
+fixtures/
+package-lock.json
+docs/BENCH.md
+playwright-report/
+test-results/
+.lighthouseci/
+.vercel/
+*.md
+*.css
