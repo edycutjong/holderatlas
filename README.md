@@ -45,11 +45,11 @@
 
 Every map ships with a **live call rail** on the right — each Nansen call appears as it is made (endpoint · credits · ms · response hash), turning from pending to green — and a **provenance drawer**: every Nansen call, its body, credits, latency, cached or live, the fields used, and the atlas hash. The CLI prints the same with `--explain`. **Save PNG** renders the poster (1600×900) in the browser; the permalink `/t/<chain>/<address>` re-renders it and serves it as the link preview.
 
-<div align="center"><img src="docs/screenshots/05-drawer.png" alt="Provenance drawer over the WLFI atlas: every Nansen call grouped by endpoint with credits, cached count and average live latency, then the full list" width="720" /></div>
+<div align="center"><img src="docs/screenshots/05-drawer.png" alt="Provenance drawer over the WLFI atlas: every Nansen call grouped by endpoint with credits, cached count and average live latency, then the full list — 120 credits · 114 calls · 40.0 s, the same totals the rail shows" width="720" /></div>
 
-| Streaming — `PEPE`: rows landing, the map filling | The contrast — `WLFI`: Upbit → KR 52 % | Mobile — the bar first, then the map |
+| Streaming — `WLFI` mid-run: the map filling, the call rail live on the right | The contrast — `WLFI` done: Upbit → KR 53 % | Mobile — the bar first, then the map; the rail docks at the bottom |
 |---|---|---|
-| ![PEPE mid-stream: wallets arriving with exchange chips, the number counting](docs/screenshots/02-streaming.png) | ![WLFI: 55.2% placed, KR bubble dominates the map](docs/screenshots/04-wlfi.png) | ![WLFI on a phone: the number, the bar list, the wallet rows](docs/screenshots/06-mobile.png) |
+| ![WLFI mid-stream: 12 of 52 wallets in, the rail on the right shows each Nansen call — green rows with 1 cr and latency, pending rows still pulsing](docs/screenshots/02-streaming.png) | ![WLFI: 55.3% placed, KR bubble dominates the map; the rail reads 114 calls · 120 cr · 40.0 s](docs/screenshots/04-wlfi.png) | ![WLFI on a phone: the number, the bar list, and the docked "Nansen calls" bar](docs/screenshots/06-mobile.png) |
 
 ## 💡 The Problem & Solution
 
