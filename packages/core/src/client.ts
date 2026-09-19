@@ -23,6 +23,14 @@ export type Call = {
 /** Per-call overrides: a secondary lookup can be given a shorter timeout and no retry so it cannot stall a verdict. */
 export type CallOptions = { timeoutMs?: number; retries?: number };
 
+/**
+ * Live notifications for the page's call rail: `start` fires before the first network attempt (the pending row),
+ * `end` when the Call is recorded — the SAME object that lands in `client.calls`, so the rail and the drawer cannot
+ * disagree. A cache hit or a replayed timeout emits `end` only (there is nothing to wait for). `id` pairs the two.
+ */
+export type CallEvent = { phase: "start"; id: number; endpoint: string; body: Record<string, unknown> } | { phase: "end"; id: number; call: Call };
+export type CallListener = (e: CallEvent) => void;
+
 export type ClientOptions = {
   baseUrl?: string;
   /** requests per second, client-side burst cap (Nansen: 300/min) */
@@ -108,6 +116,8 @@ export class NansenClient {
   private budgetUsed = 0;
   /** Every call made through this client, in order. */
   readonly calls: Call[] = [];
+  private listeners = new Set<CallListener>();
+  private seq = 0;
 
   constructor(
     private apiKey: string,
@@ -123,6 +133,25 @@ export class NansenClient {
     this.maxCredits = opts.maxCredits ?? Infinity;
   }
 
+  /** Listen to every call as it starts and ends (the page's live rail). Returns the unsubscribe function. */
+  subscribe(fn: CallListener): () => void {
+    this.listeners.add(fn);
+    return () => {
+      this.listeners.delete(fn);
+    };
+  }
+  protected nextCallId(): number {
+    return ++this.seq;
+  }
+  protected notify(e: CallEvent): void {
+    for (const fn of this.listeners) fn(e);
+  }
+  /** The one place a Call enters provenance: pushed to `calls` and announced to the rail in the same tick. */
+  protected record(id: number, call: Call): void {
+    this.calls.push(call);
+    this.notify({ phase: "end", id, call });
+  }
+
   /** Refuse (throw BudgetError) when one more live call to `endpoint` would cross the ceiling. Runs before every network attempt. */
   protected assertBudget(endpoint: string): void {
     const cost = CREDITS[endpoint] ?? 1;
@@ -133,9 +162,11 @@ export class NansenClient {
   /** POST `endpoint` with a JSON body; one retry on 429/5xx/timeout unless `retries: 0`; records the call. */
   async post<T = unknown>(endpoint: string, body: Record<string, unknown>, fieldsUsed: string[] = [], opts: CallOptions = {}): Promise<T> {
     const t0 = Date.now();
+    const id = this.nextCallId();
+    this.notify({ phase: "start", id, endpoint, body });
     try {
       const { text, ms, status, attempts, totalMs } = await this.postRaw(endpoint, body, opts);
-      this.calls.push({
+      this.record(id, {
         endpoint,
         body,
         credits: CREDITS[endpoint] ?? 1,
@@ -150,17 +181,17 @@ export class NansenClient {
       });
       return JSON.parse(text) as T;
     } catch (e) {
-      this.recordFailure(endpoint, body, fieldsUsed, e, Date.now() - t0);
+      this.recordFailure(id, endpoint, body, fieldsUsed, e, Date.now() - t0);
       throw e;
     }
   }
 
   /** A call that failed every attempt still appears in provenance — a hidden 12 s timeout is a recording risk, not a detail. */
-  protected recordFailure(endpoint: string, body: Record<string, unknown>, fieldsUsed: string[], e: unknown, totalMs: number) {
+  protected recordFailure(id: number, endpoint: string, body: Record<string, unknown>, fieldsUsed: string[], e: unknown, totalMs: number) {
     const status = e instanceof NansenError ? e.status : 0;
     const error = e instanceof Error ? (e.name === "AbortError" ? "timeout" : e.message.slice(0, 120)) : String(e);
     const attempts = (e as { attempts?: number })?.attempts ?? 1;
-    this.calls.push({ endpoint, body, credits: 0, ms: 0, cached: false, status, fieldsUsed, responseHash: "", attempts, totalMs, ok: false, error });
+    this.record(id, { endpoint, body, credits: 0, ms: 0, cached: false, status, fieldsUsed, responseHash: "", attempts, totalMs, ok: false, error });
   }
 
   /** The network call itself, returning the raw body so callers (and the cache) hash exactly what Nansen sent. */

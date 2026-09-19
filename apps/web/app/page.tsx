@@ -11,10 +11,10 @@ const EXAMPLE = (pepe as unknown as { atlas: Atlas }).atlas;
 export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string; chain?: string }> }) {
   const sp = await searchParams;
   return (
-    <>
+    <div className="with-rail">
       <SiteHeader current="home" />
       <AtlasApp initialQuery={sp.q} initialChain={sp.chain} example={EXAMPLE} exampleFile="fixtures/PEPE--ethereum.json" />
       <SiteFooter />
-    </>
+    </div>
   );
 }

@@ -194,7 +194,8 @@ describe("route behaviour under the guard", () => {
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l));
-    expect(lines[0].type).toBe("token");
+    expect(lines[0]).toMatchObject({ type: "call", phase: "end", call: { endpoint: "search/general" } }); // the rail sees the search before the token
+    expect(lines.find((e) => e.type !== "call").type).toBe("token");
     expect(lines.filter((e) => e.type === "wallet").length).toBeGreaterThan(30);
     const atlas = lines.find((e) => e.type === "atlas");
     expect(atlas.atlas.warnings).toContain(BUDGET_MESSAGE);
@@ -287,7 +288,8 @@ describe("crawler spend trap (audit 2026-09-19: a link checker following /judge'
       .trim()
       .split("\n")
       .map((l) => JSON.parse(l));
-    expect(lines[0].type).toBe("token");
+    expect(lines[0]).toMatchObject({ type: "call", phase: "end", call: { endpoint: "search/general" } }); // the rail sees the search before the token
+    expect(lines.find((e) => e.type !== "call").type).toBe("token");
     expect(lines.find((e) => e.type === "atlas").atlas.warnings).toContain(CRAWLER_MESSAGE);
     expect(lines.at(-1)).toMatchObject({ type: "asOf", replay: true, degraded: false });
     const none = await atlasRoute(bare("NOTAFIXTURE", "&chain=base&stream=1"));

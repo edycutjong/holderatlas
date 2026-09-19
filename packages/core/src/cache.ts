@@ -106,7 +106,7 @@ export class CachedNansenClient extends NansenClient {
     if (hit?.failed && this.offline) {
       // the live run recorded a timeout here — replay it as one (never as data), so the atlas comes out identical
       const e = Object.assign(new Error("replayed timeout"), { name: "AbortError" });
-      this.calls.push({
+      this.record(this.nextCallId(), {
         endpoint,
         body,
         credits: 0,
@@ -123,7 +123,7 @@ export class CachedNansenClient extends NansenClient {
       throw e;
     }
     if (hit && !hit.failed && (fresh || this.offline)) {
-      this.calls.push({
+      this.record(this.nextCallId(), {
         endpoint,
         body,
         credits: 0,
@@ -141,17 +141,19 @@ export class CachedNansenClient extends NansenClient {
     }
     if (this.offline) throw new Error(`NANSEN_OFFLINE=1 and no cached response for ${endpoint} ${JSON.stringify(body)}`);
     const t0 = Date.now();
+    const id = this.nextCallId();
+    this.notify({ phase: "start", id, endpoint, body });
     let raw: Awaited<ReturnType<NansenClient["postRaw"]>>;
     try {
       raw = await this.postRaw(endpoint, body, opts);
     } catch (e) {
-      this.recordFailure(endpoint, body, fieldsUsed, e, Date.now() - t0);
+      this.recordFailure(id, endpoint, body, fieldsUsed, e, Date.now() - t0);
       if (e instanceof Error && e.name === "AbortError")
         this.store.set(key, { storedAt: new Date().toISOString(), ttlMs: this.ttlMs, endpoint, body, text: "", failed: "timeout" });
       throw e;
     }
     const { text, ms, status, attempts, totalMs } = raw;
-    this.calls.push({
+    this.record(id, {
       endpoint,
       body,
       credits: CREDITS[endpoint] ?? 1,

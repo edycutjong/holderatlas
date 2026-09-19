@@ -2,7 +2,7 @@
  * The engine: token → holders → per-wallet exchange entity (Nansen) → country → one atlas.
  * All Nansen I/O goes through `nansen.ts`; the arithmetic in `aggregate()` is pure and property-tested.
  */
-import { sha256, NansenError, BudgetError, type Call, type NansenClient } from "./client.js";
+import { sha256, NansenError, BudgetError, type Call, type CallEvent, type NansenClient } from "./client.js";
 import { canonicalize } from "./cache.js";
 import { nansen, window, isChain, NAMING_CHAINS, type Chain, type HolderRow, type TokenTransfer } from "./nansen.js";
 import { attributeLabel, isStructural, countryName, type Country } from "./labels.js";
@@ -98,6 +98,8 @@ export type AtlasEvent =
       partial: Pick<Atlas, "countries" | "global" | "untraced" | "unnamed" | "otherEntity" | "errors" | "attributable" | "attributableByWallets">;
     }
   | { type: "reclass"; row: WalletRow; reason: string }
+  /** one Nansen call starting (pending) or finishing — the page's live rail; `call` is the same object the drawer prints */
+  | ({ type: "call" } & CallEvent)
   | { type: "atlas"; atlas: Atlas };
 
 export type AtlasOptions = {
@@ -290,10 +292,20 @@ export function atlasHash(a: Pick<Atlas, "token" | "rows" | "attributable">): st
 }
 
 export async function atlas(client: NansenClient, input: string, opts: AtlasOptions = {}): Promise<Atlas> {
+  const emit = (e: AtlasEvent) => opts.onProgress?.(e);
+  // every call the client makes during this atlas is streamed as it happens (start → end), before the events that use it
+  const unsubscribe = client.subscribe((e) => emit({ type: "call", ...e }));
+  try {
+    return await runAtlas(client, input, opts, emit);
+  } finally {
+    unsubscribe();
+  }
+}
+
+async function runAtlas(client: NansenClient, input: string, opts: AtlasOptions, emit: (e: AtlasEvent) => void): Promise<Atlas> {
   const t0 = Date.now();
   const now = opts.now ?? Date.now();
   const callsBefore = client.calls.length;
-  const emit = (e: AtlasEvent) => opts.onProgress?.(e);
   const warnings: string[] = [];
 
   const { token, candidates } = await resolveToken(client, input, opts.chain);

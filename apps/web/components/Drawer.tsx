@@ -1,5 +1,6 @@
 "use client";
 import type { Call } from "@holderatlas/core";
+import { summarise } from "@/lib/rail";
 
 export function Drawer({
   calls,
@@ -94,18 +95,4 @@ export function Drawer({
       </table>
     </aside>
   );
-}
-
-function summarise(body: Record<string, unknown>): string {
-  const f = body.filters as Record<string, unknown> | undefined;
-  const w = (f?.to_address ?? f?.from_address) as string | undefined;
-  const parts = [
-    body.chain,
-    body.label_type ? `label_type=${body.label_type}` : null,
-    w ? `${f?.to_address ? "to" : "from"}=${w.slice(0, 8)}…` : null,
-    body.transaction_hash ? `tx=${String(body.transaction_hash).slice(0, 10)}…` : null,
-    body.address ? `addr=${String(body.address).slice(0, 8)}…` : null,
-    body.search_query ? `q=${body.search_query}` : null,
-  ];
-  return parts.filter(Boolean).join(" ");
 }

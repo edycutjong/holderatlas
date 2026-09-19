@@ -41,10 +41,10 @@ export default async function Permalink({ params }: { params: Params }) {
   const c = parseChain(chain);
   const a = safe(address);
   return (
-    <>
+    <div className="with-rail">
       <SiteHeader current="home" />
       <AtlasApp initialQuery={a || undefined} initialChain={c} example={EXAMPLE} exampleFile="fixtures/PEPE--ethereum.json" />
       <SiteFooter />
-    </>
+    </div>
   );
 }
