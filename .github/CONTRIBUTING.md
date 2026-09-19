@@ -20,6 +20,8 @@ Thanks for your interest in improving Holder Atlas! 🎉
   and a test in `labels.test.ts` pinning the exact Nansen label string to its key. Global exchanges are `"global"`, never a country.
 - Keep commits conventional: `feat:` (minor), `fix:`/`perf:` (patch), `docs:`, `test:`, `ci:`, `chore:` (no release);
   a `!` after the type or a `BREAKING CHANGE:` footer is a major. Releases are cut from these prefixes automatically.
+- Never write the literal `[skip ci]` anywhere in a commit message (body included) unless you mean it — GitHub skips every
+  push-triggered workflow for that commit, so the pipeline and the release do not run (learned on `30f05a7`).
 
 ## Releases
 Versions follow [SemVer](https://semver.org) and are derived from the commit log since the last `v*` tag — nobody edits
