@@ -1,7 +1,7 @@
 // release.mjs [--dry-run] — the release.yml algorithm, run locally (GitHub Actions is billing-blocked on this account).
 //   last v* tag → Conventional Commits since it: "!" / BREAKING CHANGE → major · feat → minor · fix/perf → patch · else no release
 //   → bump every package.json + package-lock.json (scripts/bump-version.mjs) → `npm ci --ignore-scripts` proves the lockfile
-//   → commit "chore(release): vX.Y.Z" → annotated tag → push main + tag → `gh release create vX.Y.Z --generate-notes`.
+//   → commit "chore(release): vX.Y.Z" (release.yml appends "[skip ci]"; this local script deliberately does not, so the pushed bump still runs the pipeline) → annotated tag → push main + tag → `gh release create vX.Y.Z --generate-notes`.
 // No dependencies. Refuses to run on a dirty tree or off main. `--dry-run` prints the decision and touches nothing.
 import { execFileSync } from "node:child_process";
 import process from "node:process";

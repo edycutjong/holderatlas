@@ -72,6 +72,16 @@ export function applyCall(rows: RailRow[], e: CallEvent, run: string, replayed =
   return cap([...rows, rowFromCall(e.call, key, seq, replayed)]);
 }
 
+/**
+ * A run that stops early (aborted by a new query, a stream error, a closed connection) must not leave pending rows pulsing
+ * for the rest of the session: its still-pending rows become error rows with `reason`, at 0 credits — nothing is guessed.
+ */
+export function settlePending(rows: RailRow[], run: string, reason = "aborted"): RailRow[] {
+  const prefix = `${run}:`;
+  if (!rows.some((r) => r.status === "pending" && r.key.startsWith(prefix))) return rows;
+  return rows.map((r) => (r.status === "pending" && r.key.startsWith(prefix) ? { ...r, status: "error" as const, error: reason, credits: 0, ms: 0 } : r));
+}
+
 /** Mark every row of `run` as replayed — used when the stream's closing `asOf` says the run was a fixture replay. */
 export function markReplayed(rows: RailRow[], run: string): RailRow[] {
   return rows.map((r) => (r.key.startsWith(`${run}:`) && !r.replayed ? { ...r, replayed: true } : r));

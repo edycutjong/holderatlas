@@ -7,7 +7,7 @@
 import { describe, it, expect } from "vitest";
 import { CachedNansenClient, MemoryCache, atlas, readFixture, fixtureStore, type AtlasEvent, type CallEvent } from "../src/index.js";
 import { fakeClient } from "./helpers.js";
-import { applyCall, markReplayed, rowsFromCalls, totals, summarise, RAIL_CAP, type RailRow } from "@/lib/rail";
+import { applyCall, markReplayed, rowsFromCalls, settlePending, totals, summarise, RAIL_CAP, type RailRow } from "@/lib/rail";
 
 describe("client call events", () => {
   it("a live call announces start then end, and the end carries the recorded Call object itself", async () => {
@@ -145,6 +145,36 @@ describe("rail reducer (apps/web/lib/rail.ts)", () => {
     expect(many).toHaveLength(RAIL_CAP);
     expect(many[0].key).not.toBe("example:1"); // oldest dropped first
     expect(many.at(-1)!.key).toBe("1:150");
+  });
+
+  it("an aborted run settles its pending rows as errors — nothing pulses for the rest of the session, other runs untouched", () => {
+    let rows: RailRow[] = rowsFromCalls([], "example");
+    rows = applyCall(rows, { phase: "start", id: 1, endpoint: "tgm/transfers", body: { chain: "ethereum" } }, "1");
+    rows = applyCall(rows, { phase: "start", id: 2, endpoint: "tgm/transfers", body: { chain: "ethereum" } }, "1");
+    const done = {
+      endpoint: "tgm/transfers",
+      body: {},
+      credits: 1,
+      ms: 300,
+      cached: false,
+      status: 200,
+      fieldsUsed: [],
+      responseHash: "abcd".padEnd(64, "0"),
+      attempts: 1,
+      totalMs: 300,
+      ok: true,
+    };
+    rows = applyCall(rows, { phase: "end", id: 1, call: done }, "1");
+    rows = applyCall(rows, { phase: "start", id: 1, endpoint: "search/general", body: { search_query: "WLFI" } }, "2"); // the new run
+    const settled = settlePending(rows, "1", "aborted");
+    expect(settled.map((r) => [r.key, r.status])).toEqual([
+      ["1:1", "live"],
+      ["1:2", "error"],
+      ["2:1", "pending"],
+    ]);
+    expect(settled[1]).toMatchObject({ error: "aborted", credits: 0, ms: 0 });
+    expect(totals(settled)).toEqual({ calls: 2, credits: 1, pending: 1 });
+    expect(settlePending(settled, "1")).toBe(settled); // idempotent, no re-render when nothing is pending
   });
 
   it("the param summary never leaks the key or a whole body", () => {

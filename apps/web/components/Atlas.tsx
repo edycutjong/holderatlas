@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Poster, pct, barRows } from "./Poster";
 import { Drawer } from "./Drawer";
 import { Rail } from "./Rail";
-import { applyCall, markReplayed, rowsFromCalls, totals, type RailRow } from "@/lib/rail";
+import { applyCall, markReplayed, rowsFromCalls, settlePending, totals, type RailRow } from "@/lib/rail";
 import { Example, HowItDecides } from "./Example";
 import { svgToPngBlob, download } from "@/lib/png";
 import { CHAINS } from "@core/nansen";
@@ -82,13 +82,18 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let buf = "";
+      // a run that was superseded (a new query aborted this fetch) must not touch state again — its last chunk may already
+      // have resolved before abort() and would otherwise flip the header / phase back to the old run (code review, 2026-09-19)
+      const settle = (reason: string) => setRail((rows) => settlePending(rows, runId, reason));
       for (;;) {
         const { value, done } = await reader.read();
+        if (ctrl.signal.aborted) return;
         if (done) break;
         buf += dec.decode(value, { stream: true });
         const { lines, rest } = splitLines(buf);
         buf = rest;
         for (const line of lines) {
+          if (ctrl.signal.aborted) return;
           const e = JSON.parse(line) as StreamEvent;
           if (e.type === "call") {
             // the rail: a pending row on start, the recorded Call on end — the same object the drawer will print
@@ -97,6 +102,7 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
             continue;
           }
           if (e.type === "error") {
+            settle("stream error");
             setError({ message: e.message, candidates: e.candidates });
             setPhase("error");
             setStatus("");
@@ -115,6 +121,7 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
         }
       }
       if (!cur || !(cur as Live).hash) {
+        settle("stream ended");
         setError({ message: "the stream ended before the map was finished — try again" });
         setPhase("error");
         setStatus("");
@@ -129,6 +136,8 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
         `${c.credits} credits · ${c.calls.length} calls${c.asOf ? ` · as of ${c.asOf.slice(11, 16)} UTC` : ""} · ${(c.ms / 1000).toFixed(1)} s · atlas ${c.hash}`,
       );
     } catch (err) {
+      // superseded by a new query or a network failure: whatever this run still had in flight is settled, never left pulsing
+      setRail((rows) => settlePending(rows, runId, (err as Error).name === "AbortError" ? "aborted" : "failed"));
       if ((err as Error).name === "AbortError") return;
       setError({ message: (err as Error).message });
       setPhase("error");
