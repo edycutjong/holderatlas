@@ -30,10 +30,10 @@ export function Mark({ size = 24 }: { size?: number }) {
   );
 }
 
-export function SiteHeader({ current }: { current: "home" | "judge" }) {
+export function SiteHeader({ current }: { current?: "home" | "judge" }) {
   return (
     <header className="site-header">
-      <Link href="/" className="brand" aria-label="Holder Atlas — home">
+      <Link href="/" className="brand">
         <Mark />
         <span className="brand-name">holderatlas</span>
         <span className="brand-tag">where a token&rsquo;s holders are · on Nansen</span>

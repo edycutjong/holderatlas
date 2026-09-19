@@ -236,7 +236,7 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
                 }}
               >
                 {x.q}
-                <span style={{ opacity: 0.6 }}> · {x.chain}</span>
+                <span className="chip-chain"> · {x.chain}</span>
               </button>
             ))}
           </div>

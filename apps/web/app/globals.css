@@ -43,7 +43,7 @@ body {
   min-height: 100vh;
 }
 a { color: var(--accent); text-decoration: none; }
-a:hover, a:focus-visible { text-decoration: underline; outline: none; }
+a:hover, a:focus-visible { text-decoration: underline; }
 button { font: inherit; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 255, 0.05); padding: 1px 5px; border-radius: 5px; }
@@ -60,7 +60,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
   gap: 16px;
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--text); }
-.brand:hover { text-decoration: none; }
+.brand:hover, .brand:focus-visible { text-decoration: none; }
 .brand-name { font-weight: 800; letter-spacing: -0.02em; font-size: 18px; }
 .brand-tag { color: var(--muted); font-size: 13px; }
 .site-nav { display: flex; gap: 4px; }
@@ -84,7 +84,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 /* the input is the hero object */
 .panel { max-width: 720px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 14px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03); }
 .search { display: flex; gap: 10px; }
-.search input { flex: 1; min-width: 0; font: 500 20px var(--sans); padding: 14px 16px; border-radius: var(--r-md); border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text); outline: none; transition: border-color 120ms, box-shadow 120ms; }
+.search input { flex: 1; min-width: 0; font: 500 20px var(--sans); padding: 14px 16px; border-radius: var(--r-md); border: 1px solid var(--border-2); background: var(--bg-2); color: var(--text); outline: none; transition: border-color 120ms; } /* the focus ring is the box-shadow — never transitioned, so it is visible the instant focus lands */
 .search input::placeholder { color: var(--muted); }
 .search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22); }
 .search button { padding: 14px 24px; border-radius: var(--r-md); border: 0; background: var(--real); color: var(--real-ink); font-weight: 800; font-size: 16px; transition: transform 120ms, filter 120ms; }
@@ -93,8 +93,10 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 .search button:disabled { opacity: 0.6; cursor: wait; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .chip { border: 1px solid var(--border-2); background: transparent; color: var(--text-2); border-radius: 999px; padding: 6px 12px; min-height: 36px; font-size: 13px; font-weight: 500; transition: border-color 120ms, color 120ms, background 120ms; }
-.chip:hover, .chip:focus-visible { border-color: var(--accent); color: var(--text); outline: none; }
+.chip:hover, .chip:focus-visible { border-color: var(--accent); color: var(--text); }
+.chip-chain { color: var(--muted); } /* a token, not opacity: 0.6 blended --text-2 to 4.3:1 on --surface (axe color-contrast) */
 .chip.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.chip.on .chip-chain { color: inherit; opacity: 0.8; }
 .chip.on:hover { filter: brightness(1.12); color: var(--accent-ink); }
 
 .hidden { display: none !important; }
@@ -138,7 +140,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 .card.winner .bar > i { background: var(--real); }
 .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
 .btn { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-2); background: transparent; color: var(--text); font-weight: 600; transition: background 120ms, border-color 120ms, transform 120ms; }
-.btn:hover, .btn:focus-visible { border-color: var(--accent); background: rgba(56, 189, 248, 0.08); outline: none; }
+.btn:hover, .btn:focus-visible { border-color: var(--accent); background: rgba(56, 189, 248, 0.08); }
 .btn:active { transform: scale(0.97); }
 .btn.primary { background: var(--real); border-color: var(--real); color: var(--real-ink); }
 .btn.primary:hover { filter: brightness(1.08); }
@@ -215,7 +217,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
   appearance: none;
   -webkit-appearance: none;
   cursor: pointer;
-  transition: border-color 120ms, box-shadow 120ms;
+  transition: border-color 120ms; /* ring = box-shadow, instant (see .search input) */
 }
 .search select:hover { border-color: var(--accent); }
 .search select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.22); }
@@ -322,7 +324,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 .rail-foot-links { display: inline-flex; gap: 12px; align-items: center; }
 .rail-foot code { font-size: 11px; padding: 0 4px; }
 .rail-clear { border: 0; background: transparent; color: var(--accent); padding: 4px 6px; border-radius: 6px; font-size: 12px; font-weight: 600; transition: background 120ms, color 120ms; }
-.rail-clear:hover, .rail-clear:focus-visible { background: rgba(56, 189, 248, 0.1); text-decoration: underline; outline: none; }
+.rail-clear:hover, .rail-clear:focus-visible { background: rgba(56, 189, 248, 0.1); text-decoration: underline; }
 .rail-clear:disabled { color: var(--muted); cursor: default; text-decoration: none; background: transparent; }
 /* ≥ 1280: the fixed right rail; the page keeps --wrap and leaves the rail's width free on the right (360 + 24 + 24) */
 @media (min-width: 1280px) {
