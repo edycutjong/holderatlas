@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
- * GET /api/og?q=PEPE&chain=ethereum → 1200×675 PNG for link previews. Never spends credits: a recorded fixture replays,
+ * GET /api/og?q=PEPE&chain=ethereum → 1200×630 PNG (the Open Graph size every unfurler crops to) for link previews. Never spends credits: a recorded fixture replays,
  * otherwise today's disk cache answers offline, otherwise a generic card. Crawlers get a picture in < 1 s, not a 40 s run.
  */
 export async function GET(req: NextRequest) {
@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
     }
   }
   const headers = { "cache-control": "public, s-maxage=1800, stale-while-revalidate=86400" };
-  if (!a) return new ImageResponse(<Generic />, { width: 1200, height: 675, headers });
-  return new ImageResponse(<Card d={toPoster(a)} />, { width: 1200, height: 675, headers });
+  if (!a) return new ImageResponse(<Generic />, { width: 1200, height: 630, headers });
+  return new ImageResponse(<Card d={toPoster(a)} />, { width: 1200, height: 630, headers });
 }
 
 function Generic() {
@@ -39,7 +39,7 @@ function Generic() {
       style={{
         display: "flex",
         width: 1200,
-        height: 675,
+        height: 630,
         background: C.surface,
         color: C.text,
         flexDirection: "column",
@@ -63,17 +63,17 @@ function Card({ d }: { d: PosterData }) {
   const rows = barRows(d).slice(0, 7);
   const scale = Math.max(0.25, ...rows.map((r) => r.share));
   const mapW = 640,
-    mapH = 320;
+    mapH = 320; // 2:1, the world viewBox; with the 140px number this sits inside 630 with ~60px to spare
   return (
     <div
       style={{
         display: "flex",
         width: 1200,
-        height: 675,
+        height: 630,
         background: C.surface,
         color: C.text,
         flexDirection: "column",
-        padding: "36px 44px",
+        padding: "30px 44px",
         fontFamily: "sans-serif",
       }}
     >
@@ -86,13 +86,13 @@ function Card({ d }: { d: PosterData }) {
       <div style={{ display: "flex", gap: 30, marginTop: 6, flex: 1 }}>
         <div style={{ display: "flex", flexDirection: "column", width: 660 }}>
           <div style={{ display: "flex", alignItems: "baseline" }}>
-            <div style={{ display: "flex", fontSize: 150, fontWeight: 800, letterSpacing: -6, lineHeight: 1 }}>{(d.attributable * 100).toFixed(0)}</div>
+            <div style={{ display: "flex", fontSize: 140, fontWeight: 800, letterSpacing: -6, lineHeight: 1 }}>{(d.attributable * 100).toFixed(0)}</div>
             <div style={{ display: "flex", fontSize: 70, fontWeight: 800, color: C.real, marginLeft: 6 }}>%</div>
           </div>
           <div style={{ display: "flex", fontSize: 20, color: C.text2, marginTop: -6 }}>
             of analysed supply placed on a country · {pct(d.attributableByWallets, 0)} of wallets
           </div>
-          <svg width={mapW} height={mapH} viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} style={{ marginTop: 14 }}>
+          <svg width={mapW} height={mapH} viewBox={`0 0 ${WORLD_W} ${WORLD_H}`} style={{ marginTop: 12 }}>
             {COUNTRY_PATHS.map((p) => (
               <path key={p.code} d={p.d} fill={C.surface2} stroke={C.border} strokeWidth="0.75" />
             ))}
@@ -123,7 +123,7 @@ function Card({ d }: { d: PosterData }) {
                 />
               </div>
               <div style={{ display: "flex", fontSize: 18, fontWeight: 700 }}>{pct(r.share)}</div>
-              <div style={{ display: "flex", fontSize: 14, color: C.muted, whiteSpace: "nowrap" }}>{r.wallets} w</div>
+              <div style={{ display: "flex", fontSize: 14, color: C.muted, whiteSpace: "nowrap", marginLeft: 4 }}>{r.wallets} w</div>
             </div>
           ))}
           {!rows.length ? <div style={{ display: "flex", fontSize: 18, color: C.muted }}>nothing analysed</div> : null}

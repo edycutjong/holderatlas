@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   return {
     title,
     description: "Where this token's holders reach exchanges from, and how much of the supply the map can honestly place.",
-    openGraph: { title, images: [{ url: `/api/og?q=${encodeURIComponent(a)}&chain=${c}`, width: 1200, height: 675 }] },
+    openGraph: { title, images: [{ url: `/api/og?q=${encodeURIComponent(a)}&chain=${c}&v=2`, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", title },
     alternates: { canonical: `/t/${c}/${encodeURIComponent(a)}` },
   };

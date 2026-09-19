@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE),
   title: "Holder Atlas — where a token's holders actually are",
   description:
-    "Type a token. One world map of the countries its holders reach exchanges from, inferred from Nansen exchange entity labels, with the honest % of supply the map covers.",
+    "Type a token. One world map of the countries its holders reach exchanges from — read from Nansen exchange labels — with the honest % of supply it covers.",
   openGraph: {
     type: "website",
     url: "/",
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
     description: "Type a token. See where its holders actually are — and how much of the supply the map can honestly place.",
     images: [
       {
-        url: "/api/og?q=PEPE&chain=ethereum&v=1",
+        url: "/api/og?q=PEPE&chain=ethereum&v=2",
         width: 1200,
-        height: 675,
+        height: 630,
         alt: "Holder Atlas poster for PEPE: 40% of analysed supply placed on a country — US, KR, GB, TR, NL — with global exchanges and untraced wallets in grey",
       },
     ],
