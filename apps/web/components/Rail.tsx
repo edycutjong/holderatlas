@@ -172,15 +172,12 @@ function useCountUp(target: number): number {
       const p = Math.min(1, (now - t0) / 240);
       const e = 1 - Math.pow(1 - p, 3);
       const v = Math.round(start + (target - start) * e);
+      from.current = v; // a new target mid-flight continues from what is on screen, no jump back
       setShown(v);
       if (p < 1) raf = requestAnimationFrame(tick);
-      else from.current = target;
     };
     raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      from.current = target;
-    };
+    return () => cancelAnimationFrame(raf);
   }, [target]);
   return shown;
 }

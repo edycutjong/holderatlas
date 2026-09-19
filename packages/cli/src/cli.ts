@@ -57,6 +57,16 @@ try {
             process.stderr.write(
               `${D}holders ${e.fetched}: ${e.custody} exchange custody · ${e.human} people · ${e.structural} pools/contracts → examining ${e.examined.custody} + ${e.examined.human}${X}\n`,
             );
+          if (e.type === "call" && e.phase === "end" && flags.has("--explain")) {
+            // the same line the web rail shows, as each call lands: endpoint · credits · ms · response hash
+            const c = e.call;
+            const tail = !c.ok
+              ? `${R}${c.error}${X}`
+              : c.cached
+                ? `${D}0 cr · cached${X}`
+                : `${G}${c.credits} cr${X} ${D}${c.ms} ms · ${c.responseHash.slice(0, 4)}…${X}`;
+            process.stderr.write(`    ${D}POST${X} ${c.endpoint.padEnd(38)} ${tail}\n`);
+          }
           if (e.type === "wallet" && flags.has("--explain")) {
             const r = e.row;
             const where = r.country
