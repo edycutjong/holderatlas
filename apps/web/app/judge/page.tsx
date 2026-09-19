@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "The claim, the 30-second path, the receipts, the real reproduce command, and the honest limitations.",
 };
 
-const TEST_COUNT = 173;
+const TEST_COUNT = 181;
 const CLEAN_CLONE_S = "54";
 
 export default function Judge() {
@@ -37,7 +37,9 @@ export default function Judge() {
               <code>{SITE}/?q=PEPE&amp;chain=ethereum</code>
             </a>
             . Rows stream in — each wallet gains its exchange (🏦 Coinbase, 🏦 Upbit, 🏦 Binance…) — the map fills country by country, the bar re-sorts, the
-            number counts to <b>40.4 %</b>: US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40–60 s, cached ≈ 0 s.
+            number counts to <b>40.4 %</b>: US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40–60 s, cached ≈ 0 s. On the
+            right, the <b>Nansen call rail</b> shows every request as it is made — <code>POST tgm/transfers</code>, credits, ms, response hash — each row
+            turning from pending to green; its counters equal the drawer&rsquo;s totals.
           </li>
           <li>
             Click <b>WLFI</b> — the Korean contrast: Upbit holds half the analysed supply → <b>55 %</b>, KR 52. Then <b>DEGEN · base</b>: Coinbase → US 54.

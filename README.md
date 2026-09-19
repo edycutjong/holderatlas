@@ -20,7 +20,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js_15-black?style=flat&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Nansen API](https://img.shields.io/badge/Nansen_API-5_endpoints-7c3aed?style=flat&labelColor=0a0e13)
-![tests](https://img.shields.io/badge/tests-173%20passing-22c55e?style=flat)
+![tests](https://img.shields.io/badge/tests-181%20passing-22c55e?style=flat)
 ![generated cases](https://img.shields.io/badge/generated_cases-24%2C000-22c55e?style=flat)
 ![fixtures](https://img.shields.io/badge/fixtures-12%2F12%20replay%20offline-22c55e?style=flat)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
@@ -43,7 +43,7 @@
 | `DEGEN` · base | Coinbase custody + Coinbase withdrawals | **58.1 %** placed: US 54 · GB 2 · NL 1 |
 | `MEW` · solana | exchanges visible but Nansen cannot name them on Solana | **0 %** — a hatched "unnamed 90 %" bar and a banner that says which field is missing |
 
-Every map ships with a **provenance drawer**: every Nansen call, its body, credits, latency, cached or live, the fields used, and the atlas hash. The CLI prints the same with `--explain`. **Save PNG** renders the poster (1600×900) in the browser; the permalink `/t/<chain>/<address>` re-renders it and serves it as the link preview.
+Every map ships with a **live call rail** on the right — each Nansen call appears as it is made (endpoint · credits · ms · response hash), turning from pending to green — and a **provenance drawer**: every Nansen call, its body, credits, latency, cached or live, the fields used, and the atlas hash. The CLI prints the same with `--explain`. **Save PNG** renders the poster (1600×900) in the browser; the permalink `/t/<chain>/<address>` re-renders it and serves it as the link preview.
 
 <div align="center"><img src="docs/screenshots/05-drawer.png" alt="Provenance drawer over the WLFI atlas: every Nansen call grouped by endpoint with credits, cached count and average live latency, then the full list" width="720" /></div>
 
@@ -75,13 +75,20 @@ Rules with live numbers in [docs/SCORING.md](docs/SCORING.md). The table is data
 
 One atlas function, three views. No database, no accounts, no LLM, no fonts from a CDN.
 
+<p align="center"><img src="docs/assets/architecture.png" alt="Holder Atlas architecture — web page, permalink, OG card and CLI all call packages/core atlas() through /api/atlas with its spend guard; the engine calls five Nansen endpoints (search/general 0 cr, tgm/holders 5 cr ×2, tgm/transfers 1 cr per wallet, transaction-with-token-transfer-lookup 1 cr per traced wallet, related-wallets 1 cr ×≤5), joins the entity label to exchanges.json, streams every call to the rail, and outputs the atlas with provenance and a sha256 hash; a read-through cache and 12 fixtures replay offline" width="100%"></p>
+
+<details><summary><b>Mermaid source</b> — expand to see the diagram as text (renders on GitHub)</summary>
+
 ```mermaid
 flowchart LR
   CLI[CLI] --> A
-  WEB[web page · NDJSON stream] --> API[/api/atlas · guard/] --> A
+  WEB[web page · NDJSON stream · call rail] --> API[/api/atlas · guard/] --> A
   A[packages/core atlas] --> S[search/general 0] --> H[tgm/holders ×2 · 5+5] --> T[tgm/transfers · 1/wallet] --> L[transfer lookup · 1/wallet] --> X[(exchanges.json)] --> N[the number + hash]
   H -.untraced ≥ 2 %.-> K[related-wallets · 1] --> N
+  A -.every call, as it happens.-> R[call rail · drawer]
 ```
+
+</details>
 
 | Layer | Choice | Why |
 |---|---|---|
@@ -106,7 +113,7 @@ The engine, not decoration — every placement on the map is a Nansen response f
 | `transaction-with-token-transfer-lookup` | 1 × traced wallet | `token_transfer_array[].from/to_address_label` | **the exchange entity** → country / global |
 | `profiler/address/related-wallets` | 1 × ≤ 5 | `relation` (`Deployed by`) | an unlabelled mega-holder is a contract → excluded |
 
-~118 credits per cold map, 0 on a cache hit. Cached calls are labelled and never counted; failed calls are shown as "lookup failed", never guessed.
+~118 credits per cold map, 0 on a cache hit. Cached calls are labelled and never counted; failed calls are shown as "lookup failed", never guessed. **Every call is visible while it happens:** the page's right-hand rail streams each Nansen request as a row — pending → live (green) · cached (grey) · error (red) — with `POST endpoint`, the chain and wallet filter, the credits, the latency and the response sha256, and its counters equal the provenance drawer's totals exactly (same `Call` objects, nothing synthetic).
 
 ### Why only Nansen
 
@@ -118,7 +125,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 
 | Metric | Value | Source |
 |---|---|---|
-| Tests | **173 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash | `packages/core/test/` |
+| Tests | **181 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash | `packages/core/test/` |
 | Property-based verification | **24,000 generated cases** (fast-check) = **14,000 property cases** — shares partition the supply, global never attributed, structural never in the denominator, hash purity, label normaliser, every table key resolves (7 × 2,000) — + **10,000 generated malformed queries** → 400 with zero fetches | `property.test.ts`, `boundary.test.ts` |
 | Permission boundary | the server key never reaches a client (atlas, events, provenance, cache keys, errors) | `boundary.test.ts`, [SECURITY.md](.github/SECURITY.md) |
 | Spend guard | only the page's own fetch (run marker) may go live — a bare GET of `/api/atlas` (crawlers, unfurlers, `curl`) gets the labelled fixture replay or a 202, never a Nansen call · 4 cold maps / IP / min · 3,000 live credits / day; past the ceiling a recorded fixture replays at 0 credits, labelled, or an honest 503 | `apps/web/lib/guard.ts`, `guard.test.ts` |
@@ -178,7 +185,7 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 
 ```bash
 npm run lint && npm run format:check && npm run typecheck
-npm test                       # 173 tests
+npm test                       # 181 tests
 npm run test:coverage          # v8 coverage on packages/core/src
 npm run verify                 # 12/12 offline
 npm run check                  # README claims vs the tree, kitchen/secret scan, git-history key scan
@@ -188,7 +195,7 @@ npm run ci                     # all of the above
 ## 📁 Project Structure
 
 ```
-packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (173)
+packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (181)
 packages/cli      npm run holderatlas -- <token> [--chain] [--holders 40] [--custody 12] [--json --explain --no-cache]
 apps/web          Next 15: the page (stream → picture → PNG) · /t/<chain>/<address> · /api/atlas · /api/og · /judge · guard
 scripts           spike · seed · verify · bench · check_submission_readiness
