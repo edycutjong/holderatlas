@@ -341,7 +341,7 @@ export function AtlasApp({ initialQuery, initialChain, example }: { initialQuery
       <Rail
         rows={rail}
         runNames={runNames}
-        run={{ label: runMeta.label, calls: runTotals.calls, credits: runTotals.credits, startedAt: runMeta.startedAt, ms: runMeta.ms }}
+        run={{ id: runMeta.id, label: runMeta.label, calls: runTotals.calls, credits: runTotals.credits, startedAt: runMeta.startedAt, ms: runMeta.ms }}
         session={session}
         onClear={clearRail}
       />

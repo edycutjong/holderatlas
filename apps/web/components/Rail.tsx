@@ -20,7 +20,14 @@ export function Rail({
   /** run id → what was typed, for the divider between runs (the rail accumulates across the session) */
   runNames: Record<string, string>;
   /** the current run's header numbers: label + calls/credits so far, plus the clock (ticking while `startedAt` is set, frozen at `ms` after) */
-  run: { label: "replayed" | "streaming" | "live" | "cached" | "error" | "none"; calls: number; credits: number; startedAt: number | null; ms: number | null };
+  run: {
+    id: string;
+    label: "replayed" | "streaming" | "live" | "cached" | "error" | "none";
+    calls: number;
+    credits: number;
+    startedAt: number | null;
+    ms: number | null;
+  };
   session: { calls: number; credits: number };
   onClear: () => void;
 }) {
@@ -33,16 +40,22 @@ export function Rail({
   const seconds = useClock(run.startedAt, run.ms);
   const t = totals(rows);
 
-  // follow the newest row unless the reader scrolled up to look at older ones
+  // follow the newest row unless the reader scrolled up to look at older ones; a new run always brings the view back
+  const autoTop = useRef(0);
+  useEffect(() => {
+    stick.current = true;
+  }, [run.id]);
   useEffect(() => {
     const el = listRef.current;
     if (!el || !stick.current) return;
     el.scrollTop = el.scrollHeight;
-  }, [rows, open]);
+    autoTop.current = el.scrollTop; // what the browser could actually reach (page zoom can leave a sub-pixel gap)
+  }, [rows, open, run.id]);
   const onScroll = () => {
     const el = listRef.current;
     if (!el) return;
-    stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+    if (el.scrollHeight - el.scrollTop - el.clientHeight < 60) stick.current = true;
+    else if (el.scrollTop < autoTop.current - 40) stick.current = false; // only a deliberate scroll up releases the follow
   };
 
   const runLabel =
