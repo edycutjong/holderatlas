@@ -22,7 +22,12 @@ export const metadata: Metadata = {
       },
     ],
   },
-  twitter: { card: "summary_large_image", creator: "@edycutjong", title: "Holder Atlas", description: "Type a token. See where its holders actually are." },
+  twitter: {
+    card: "summary_large_image",
+    creator: "@edycutjong",
+    title: "Holder Atlas",
+    description: "Type a token. See where its holders actually are — and how much of the supply the map can honestly place.",
+  },
   authors: [{ name: "Edy Cu Tjong", url: "https://github.com/edycutjong" }],
   creator: "Edy Cu Tjong",
   alternates: { canonical: "/" },
