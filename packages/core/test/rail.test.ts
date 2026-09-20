@@ -4,10 +4,22 @@
  * as `call` events in order, and (3) the page's reducer (apps/web/lib/rail.ts) turns them into rows whose totals equal
  * the drawer's — calls, credits — with pending rows completing in place, oldest at the top.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { CachedNansenClient, MemoryCache, atlas, readFixture, fixtureStore, type AtlasEvent, type CallEvent } from "../src/index.js";
 import { fakeClient } from "./helpers.js";
 import { applyCall, markReplayed, rowsFromCalls, settlePending, totals, summarise, RAIL_CAP, type RailRow } from "@/lib/rail";
+
+// A real shell with NANSEN_OFFLINE=1 exported must not change what this suite asserts — the CachedNansenClient built
+// below relies on the default (live) path unless it passes `offline` explicitly, so the ambient env is neutralized
+// around every test in this file.
+const REAL_NANSEN_OFFLINE = process.env.NANSEN_OFFLINE;
+beforeEach(() => {
+  delete process.env.NANSEN_OFFLINE;
+});
+afterEach(() => {
+  if (REAL_NANSEN_OFFLINE === undefined) delete process.env.NANSEN_OFFLINE;
+  else process.env.NANSEN_OFFLINE = REAL_NANSEN_OFFLINE;
+});
 
 describe("client call events", () => {
   it("a live call announces start then end, and the end carries the recorded Call object itself", async () => {

@@ -29,6 +29,18 @@ import {
 } from "@/lib/guard";
 
 const KEY = "nsn_test_key_0000000000000000000000";
+
+// A real shell with NANSEN_OFFLINE=1 exported must not change what this suite asserts — the route drives a live
+// CachedNansenClient in several tests here, so the ambient env is neutralized around every test in this file.
+const REAL_NANSEN_OFFLINE = process.env.NANSEN_OFFLINE;
+beforeEach(() => {
+  delete process.env.NANSEN_OFFLINE;
+});
+afterEach(() => {
+  if (REAL_NANSEN_OFFLINE === undefined) delete process.env.NANSEN_OFFLINE;
+  else process.env.NANSEN_OFFLINE = REAL_NANSEN_OFFLINE;
+});
+
 /** the page's own fetch: carries the run marker (RUN_HEADER) — the only kind of request that may go live */
 const req = (q: string, extra = "", ip = "203.0.113.7") =>
   new NextRequest(`http://localhost:3000/api/atlas?q=${encodeURIComponent(q)}${extra}`, { headers: { "x-forwarded-for": ip, [RUN_HEADER]: "1" } });
