@@ -1,9 +1,20 @@
-import { describe, it, expect } from "vitest";
-import { NansenClient, BudgetError } from "../src/client.js";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { NansenClient, BudgetError, clientFromEnv } from "../src/client.js";
 import { CachedNansenClient, MemoryCache } from "../src/cache.js";
 import { atlas } from "../src/atlas.js";
 import { pepeRoutes } from "./helpers.js";
 import { fakeClient } from "./helpers.js";
+
+// A real shell with NANSEN_OFFLINE=1 exported must not change what this suite asserts — the CachedNansenClient built
+// below relies on the default (live) path, so the ambient env is neutralized around every test in this file.
+const REAL_NANSEN_OFFLINE = process.env.NANSEN_OFFLINE;
+beforeEach(() => {
+  delete process.env.NANSEN_OFFLINE;
+});
+afterEach(() => {
+  if (REAL_NANSEN_OFFLINE === undefined) delete process.env.NANSEN_OFFLINE;
+  else process.env.NANSEN_OFFLINE = REAL_NANSEN_OFFLINE;
+});
 
 describe("NansenClient", () => {
   it("rejects a missing or malformed key", () => {
@@ -49,6 +60,19 @@ describe("NansenClient", () => {
     await expect(c.post("tgm/holders", {})).rejects.toThrow(/HTTP 503/);
     expect(c.calls[0]).toMatchObject({ ok: false, status: 503, attempts: 2 });
     expect(c.calls[0].totalMs).toBeGreaterThanOrEqual(700);
+  });
+  it("a successful call to an endpoint outside the CREDITS table records 1 credit as a fallback", async () => {
+    const c = fakeClient(() => ({ ok: 1 }));
+    await c.post("totally/unknown-endpoint", {});
+    expect(c.calls[0].credits).toBe(1);
+  });
+  it("a thrown non-Error value is recorded via String(e), and its budget rolls back through the same ?? 1 fallback for an unknown endpoint", async () => {
+    const fetchImpl: typeof fetch = async () => {
+      throw "boom";
+    };
+    const c = new NansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, rps: 1000 });
+    await expect(c.post("totally/unknown-endpoint", {}, [], { retries: 0 })).rejects.toBe("boom");
+    expect(c.calls[0]).toMatchObject({ ok: false, error: "boom", credits: 0 });
   });
 });
 
@@ -143,5 +167,52 @@ describe("credit ceiling (DEVIATIONS #10, 2026-09-18: `seed --reuse-cache` on a 
     const c = fakeClient(pepeRoutes, { maxCredits: 12 });
     await expect(atlas(c, "PEPE", { now: Date.parse("2026-09-18T11:00:00Z") })).rejects.toBeInstanceOf(BudgetError);
     expect(c.creditsSpent).toBeLessThanOrEqual(12);
+  });
+});
+
+describe("RateLimiter (via NansenClient.post)", () => {
+  it("a second request within the same second waits out the window before the limiter lets it through", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl: typeof fetch = async () => new Response("{}", { status: 200 });
+      const c = new NansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, rps: 1, timeoutMs: 60_000 });
+      const first = c.post("tgm/holders", { a: 1 });
+      await vi.advanceTimersByTimeAsync(0);
+      await first;
+      const second = c.post("tgm/holders", { a: 2 });
+      let done = false;
+      second.then(() => {
+        done = true;
+      });
+      await vi.advanceTimersByTimeAsync(500);
+      expect(done).toBe(false); // still queued behind the 1 rps limiter
+      await vi.advanceTimersByTimeAsync(600);
+      await second;
+      expect(done).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe("clientFromEnv", () => {
+  it("builds a NansenClient from NANSEN_API_KEY", () => {
+    const prev = process.env.NANSEN_API_KEY;
+    process.env.NANSEN_API_KEY = "nsn_test_key_0000000000000000000000";
+    try {
+      expect(clientFromEnv()).toBeInstanceOf(NansenClient);
+    } finally {
+      if (prev === undefined) delete process.env.NANSEN_API_KEY;
+      else process.env.NANSEN_API_KEY = prev;
+    }
+  });
+  it("falls back to an empty key when NANSEN_API_KEY is unset, which the client rejects", () => {
+    const prev = process.env.NANSEN_API_KEY;
+    delete process.env.NANSEN_API_KEY;
+    try {
+      expect(() => clientFromEnv()).toThrow(/NANSEN_API_KEY/);
+    } finally {
+      if (prev !== undefined) process.env.NANSEN_API_KEY = prev;
+    }
   });
 });

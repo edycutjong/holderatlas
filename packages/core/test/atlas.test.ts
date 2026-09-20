@@ -1,9 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { atlas, aggregate, atlasHash, exchangeLabelFor, partition, resolveToken, AtlasError, type AtlasEvent, type WalletRow } from "../src/atlas.js";
 import { CachedNansenClient, MemoryCache } from "../src/cache.js";
-import { fakeClient, pepeRoutes, PEPE, BINANCE_14, UPBIT, COINBASE, POOL, BURN, CONTRACT, addr, searchTokens, holders, transfers } from "./helpers.js";
+import { fakeClient, pepeRoutes, PEPE, BINANCE_14, UPBIT, COINBASE, POOL, BURN, CONTRACT, addr, searchTokens, holders, transfers, lookup } from "./helpers.js";
 
 const NOW = Date.parse("2026-09-18T12:00:00Z");
+
+// A real shell with NANSEN_OFFLINE=1 exported must not change what this suite asserts — every CachedNansenClient built
+// below relies on the default (live) path unless it explicitly passes `offline`, so the ambient env is neutralized here.
+const REAL_NANSEN_OFFLINE = process.env.NANSEN_OFFLINE;
+beforeEach(() => {
+  delete process.env.NANSEN_OFFLINE;
+});
+afterEach(() => {
+  if (REAL_NANSEN_OFFLINE === undefined) delete process.env.NANSEN_OFFLINE;
+  else process.env.NANSEN_OFFLINE = REAL_NANSEN_OFFLINE;
+});
 
 describe("resolveToken (search/general, 0 credits)", () => {
   it("ticker → the biggest token by market cap on a supported chain; hyperliquid perps are filtered out", async () => {
@@ -44,6 +55,48 @@ describe("resolveToken (search/general, 0 credits)", () => {
     const { token } = await resolveToken(fakeClient(pepeRoutes), "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263");
     expect(token.chain).toBe("solana");
   });
+  it("an unindexed SOLANA address with an explicit solana chain also goes straight to holders", async () => {
+    const solAddr = "1".repeat(34); // valid base58-shaped, unindexed by search
+    const c = fakeClient((e) =>
+      e === "search/general"
+        ? { tokens: [], total_results: 0 }
+        : (() => {
+            throw new Error("unexpected " + e);
+          })(),
+    );
+    const { token } = await resolveToken(c, solAddr, "solana");
+    expect(token).toMatchObject({ address: solAddr, chain: "solana", name: "unknown token" });
+  });
+  it("an EVM address given with chain=solana (mismatched) is a no-token error naming the chain, not a holders fallback", async () => {
+    const c = fakeClient((e) =>
+      e === "search/general"
+        ? { tokens: [], total_results: 0 }
+        : (() => {
+            throw new Error("unexpected " + e);
+          })(),
+    );
+    await expect(resolveToken(c, PEPE, "solana")).rejects.toMatchObject({ code: "no-token", message: /on solana/ });
+  });
+  it("candidates missing market_cap/rank (schema allows null) still score against a real rival and resolve", async () => {
+    // two candidates so the sort actually invokes the comparator (a single-element array never calls it) — one with
+    // real market_cap/rank, one with neither, exercising both sides of score()'s `?? 0` and `? … : 0` fallbacks.
+    const c = fakeClient((e) =>
+      e === "search/general"
+        ? {
+            tokens: [
+              { name: "Foo", symbol: "FOO", chain: "ethereum", address: addr(9) },
+              { name: "Foo", symbol: "FOO", chain: "base", address: addr(10), rank: 1, market_cap: 5e6 },
+            ],
+            total_results: 2,
+          }
+        : (() => {
+            throw new Error("unexpected " + e);
+          })(),
+    );
+    const { token, candidates } = await resolveToken(c, "FOO");
+    expect(token.address).toBe(addr(10)); // the real rival outscores the null-field candidate
+    expect(candidates.find((x) => x.chain === "ethereum")).toMatchObject({ marketCap: null, rank: null });
+  });
 });
 
 describe("partition — holders → custody / human / structural", () => {
@@ -67,6 +120,10 @@ describe("partition — holders → custody / human / structural", () => {
       new Set(),
     );
     expect(p).toEqual([{ address: "0xabc", label: null, supply: 0, kind: "human" }]);
+  });
+  it("a missing token_amount (undefined, not just negative) also clamps to 0 supply", () => {
+    const p = partition([{ address: addr(1) }] as never, new Set());
+    expect(p).toEqual([{ address: addr(1), label: null, supply: 0, kind: "human" }]);
   });
 });
 
@@ -92,7 +149,7 @@ describe("exchangeLabelFor — which side of the transfer names the exchange", (
       ),
     ).toBe("🏦 Binance: Deposit");
   });
-  it("custody wallet: its own label", () => {
+  it("custody wallet: its own label (as the to side)", () => {
     expect(
       exchangeLabelFor(
         [{ from_address: addr(9), from_address_label: null, to_address: w, to_address_label: "🏦 Upbit", token_address: PEPE }],
@@ -101,6 +158,16 @@ describe("exchangeLabelFor — which side of the transfer names the exchange", (
         PEPE,
       ),
     ).toBe("🏦 Upbit");
+  });
+  it("custody wallet: its own label (as the from side)", () => {
+    expect(
+      exchangeLabelFor(
+        [{ from_address: w, from_address_label: "🏦 Binance 14", to_address: addr(9), to_address_label: null, token_address: PEPE }],
+        w,
+        "custody",
+        PEPE,
+      ),
+    ).toBe("🏦 Binance 14");
   });
   it("prefers transfers of the atlas token; falls back to any 🏦 that is not the wallet; null when none", () => {
     const arr = [
@@ -111,6 +178,14 @@ describe("exchangeLabelFor — which side of the transfer names the exchange", (
     expect(exchangeLabelFor(arr, w, "human", addr(8))).toBe("🏦 Kraken");
     expect(exchangeLabelFor(null, w, "human", PEPE)).toBeNull();
     expect(exchangeLabelFor([], w, "custody", PEPE)).toBeNull();
+  });
+  it("falls back to the full transfer list when none share the atlas token address (sameToken empty)", () => {
+    const arr = [{ from_address: addr(5), from_address_label: "🏦 Kraken", to_address: addr(6), to_address_label: null, token_address: addr(8) }];
+    expect(exchangeLabelFor(arr, w, "human", addr(99))).toBe("🏦 Kraken");
+  });
+  it("a transfer with no token_address at all still counts toward sameToken", () => {
+    const arr = [{ from_address: addr(5), from_address_label: "🏦 Kraken", to_address: addr(6), to_address_label: null, token_address: null }];
+    expect(exchangeLabelFor(arr, w, "human", PEPE)).toBe("🏦 Kraken");
   });
 });
 
@@ -266,6 +341,17 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(a.errors.wallets).toBe(1);
     expect(a.warnings.join()).toMatch(/could not be looked up/);
   });
+  it("a failed transfer lookup (the entity-naming call) marks the row 'error' without blocking the atlas", async () => {
+    const hash = "0x" + "b".padStart(64, "0");
+    const routes = (e: string, b: Record<string, unknown>) => {
+      if (e === "transaction-with-token-transfer-lookup" && b.transaction_hash === hash) return new Response("boom", { status: 500 });
+      return pepeRoutes(e, b);
+    };
+    const a = await atlas(fakeClient(routes, { timeoutMs: 500 }), "PEPE", { now: NOW });
+    const r = a.rows.find((x) => x.txHash === hash)!;
+    expect(r.bucket).toBe("error");
+    expect(r.error).toMatch(/transfer lookup: .*HTTP 500/);
+  });
   it("a failed exchange-holders call degrades to 'everyone is human' with a warning", async () => {
     const routes = (e: string, b: Record<string, unknown>) =>
       e === "tgm/holders" && b.label_type === "exchange" ? new Response("x", { status: 503 }) : pepeRoutes(e, b);
@@ -299,6 +385,73 @@ describe("atlas() end to end on the PEPE model", () => {
     expect(b.hash).toBe(a.hash);
     expect(b.credits).toBe(0);
     expect(b.calls.every((c) => c.cached)).toBe(true);
+  });
+  it("a non-Error throw during a per-wallet call still becomes a readable row error (settle's String(e) fallback)", async () => {
+    const routes = (e: string, b: Record<string, unknown>) => {
+      if (e === "tgm/transfers" && (b.filters as Record<string, string>).to_address === addr(1)) throw "boom";
+      return pepeRoutes(e, b);
+    };
+    const a = await atlas(fakeClient(routes, { timeoutMs: 500 }), "PEPE", { now: NOW });
+    const r = a.rows.find((x) => x.address === addr(1))!;
+    expect(r.bucket).toBe("error");
+    expect(r.error).toMatch(/boom/);
+  });
+  it("exchange-holder rows with a null or non-0x address are mapped into the exchange set safely", async () => {
+    const routes = (e: string, b: Record<string, unknown>) => {
+      if (e === "tgm/holders" && b.label_type === "exchange")
+        return {
+          data: [
+            { address: null, token_amount: 1 },
+            { address: "SolanaStyleAddressNoHexPrefix", token_amount: 1 },
+            { address: BINANCE_14, token_amount: 500 },
+          ],
+          pagination: { page: 1, per_page: 100, is_last_page: true },
+          warnings: null,
+        };
+      return pepeRoutes(e, b);
+    };
+    const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
+    expect(a.rows.find((r) => r.address === BINANCE_14)?.kind).toBe("custody");
+  });
+  it("a token whose only visible holder carries 0 supply avoids NaN in every share/coverage computation (totalSupply=0)", async () => {
+    const events: AtlasEvent[] = [];
+    const routes = (e: string, b: Record<string, unknown>) => {
+      if (e === "search/general") return searchTokens([{ chain: "ethereum", address: PEPE }]);
+      if (e === "tgm/holders") return b.label_type === "exchange" ? holders([]) : holders([{ address: addr(1), amount: 0 }]);
+      if (e === "tgm/transfers") return transfers([]);
+      if (e === "transaction-with-token-transfer-lookup") return lookup([]);
+      if (e === "profiler/address/related-wallets") return { data: [] };
+      throw new Error("unexpected " + e);
+    };
+    const a = await atlas(fakeClient(routes), "PEPE", { now: NOW, onProgress: (ev) => events.push(ev) });
+    expect(a.coverage).toBe(0);
+    expect(a.structuralShare).toBe(0);
+    expect(a.rows[0].topShare).toBe(0);
+    const holdersEvent = events.find((e) => e.type === "holders") as { coverage: number; structuralShare: number; custodyShare: number };
+    expect(holdersEvent).toMatchObject({ coverage: 0, structuralShare: 0, custodyShare: 0 });
+    const walletEvent = events.find((e) => e.type === "wallet") as { topShare: number };
+    expect(walletEvent.topShare).toBe(0);
+  });
+  it("concurrency:0 still processes the queue (Math.max floors the worker width at 1)", async () => {
+    const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 0 });
+    expect(a.rows.length).toBeGreaterThan(0);
+  });
+  it("holders that are entirely structural (no custody, no human) produce an empty lookup queue — no probe wallet, no per-wallet calls", async () => {
+    const routes = (e: string, b: Record<string, unknown>) => {
+      if (e === "search/general") return searchTokens([{ chain: "ethereum", address: PEPE }]);
+      if (e === "tgm/holders") return b.label_type === "exchange" ? holders([]) : holders([{ address: BURN, amount: 1000 }]);
+      throw new Error("unexpected " + e);
+    };
+    const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
+    expect(a.rows).toMatchObject([{ address: BURN, kind: "structural", topShare: 1 }]);
+    expect(a.examined).toEqual({ custody: 0, human: 0 });
+  });
+  it("a failed related-wallets check leaves the row as-is — never reclassified, never blocks the atlas", async () => {
+    const routes = (e: string, b: Record<string, unknown>) =>
+      e === "profiler/address/related-wallets" && b.address === CONTRACT ? new Response("boom", { status: 500 }) : pepeRoutes(e, b);
+    const a = await atlas(fakeClient(routes, { timeoutMs: 500 }), "PEPE", { now: NOW });
+    const r = a.rows.find((x) => x.address === CONTRACT)!;
+    expect(r.kind).not.toBe("structural");
   });
 });
 

@@ -91,7 +91,11 @@ export const TxLookupResponse = z.object({
 });
 export type TxLookupResponse = z.infer<typeof TxLookupResponse>;
 
-function parse<T>(schema: z.ZodType<T>, endpoint: string, raw: unknown): T {
+// `schema: S extends z.ZodTypeAny` + `z.infer<S>` (rather than `z.ZodType<T>` + `T`) is the precise idiom here: binding
+// T only through ZodType's Output parameter let inference leak in the Input type too, so a field with `.default()`
+// (optional on input, always-present on output) type-checked as possibly undefined even though safeParse guarantees
+// the default is applied (fixed 2026-09-20 alongside removing the now-provably-dead `res.tokens ?? []` in atlas.ts).
+function parse<S extends z.ZodTypeAny>(schema: S, endpoint: string, raw: unknown): z.infer<S> {
   const r = schema.safeParse(raw);
   if (!r.success) throw new Error(`Nansen ${endpoint}: unexpected response shape — ${r.error.issues[0]?.path.join(".")}: ${r.error.issues[0]?.message}`);
   return r.data;

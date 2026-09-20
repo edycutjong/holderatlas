@@ -80,6 +80,7 @@ describe("exchanges.json — the curated table", () => {
   it("unknown keys → null everywhere", () => {
     expect(exchangeOf("metamask")).toBeNull();
     expect(countryOf(null)).toBeNull();
+    expect(countryOf("metamask")).toBeNull(); // a real entity key, but not a row in the exchange table
     expect(exchangeOf(null)).toBeNull();
     expect(sourceOf("upbit")).toMatch(/Dunamu/);
     expect(sourceOf("nope")).toBeUndefined();

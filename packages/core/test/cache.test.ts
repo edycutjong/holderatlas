@@ -1,7 +1,22 @@
-import { describe, it, expect } from "vitest";
-import { CachedNansenClient, MemoryCache, cacheKey } from "../src/cache.js";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { CachedNansenClient, MemoryCache, DiskCache, cacheKey, cachedClientFromEnv } from "../src/cache.js";
 
 const KEY = "nsn_test_key_0000000000000000000000";
+
+// A real shell with NANSEN_OFFLINE=1 exported must not change what this suite asserts — every test below builds its
+// own CachedNansenClient relying on the default (live) path unless it passes `offline` explicitly, so the ambient env
+// is neutralized around every test in this file.
+const REAL_NANSEN_OFFLINE = process.env.NANSEN_OFFLINE;
+beforeEach(() => {
+  delete process.env.NANSEN_OFFLINE;
+});
+afterEach(() => {
+  if (REAL_NANSEN_OFFLINE === undefined) delete process.env.NANSEN_OFFLINE;
+  else process.env.NANSEN_OFFLINE = REAL_NANSEN_OFFLINE;
+});
 function cached(routes: () => unknown, opts: Partial<ConstructorParameters<typeof CachedNansenClient>[1]> = {}) {
   let hits = 0;
   const fetchImpl: typeof fetch = async () => {
@@ -90,5 +105,72 @@ describe("review round 2: creditsSpent on the cached client", () => {
     await expect(c.post("tgm/holders", { a: 1 }, [], { retries: 0 })).rejects.toThrow();
     expect(c.calls[0]).toMatchObject({ ok: false, credits: 0 });
     expect(c.creditsSpent).toBe(0);
+  });
+});
+
+describe("CachedNansenClient — defaults", () => {
+  it("with no store given, defaults to a DiskCache rooted at cwd (a second identical call still hits cache)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "holderatlas-cache-cwd-"));
+    const prevCwd = process.cwd();
+    process.chdir(dir);
+    try {
+      let hits = 0;
+      const fetchImpl: typeof fetch = async () => {
+        hits++;
+        return new Response('{"v":1}', { status: 200 });
+      };
+      const c = new CachedNansenClient(KEY, { fetchImpl, rps: 1000 });
+      await c.post("tgm/holders", { a: 1 });
+      await c.post("tgm/holders", { a: 1 });
+      expect(hits).toBe(1);
+      expect(c.calls[1].cached).toBe(true);
+    } finally {
+      process.chdir(prevCwd);
+    }
+  });
+  it("a live call to an endpoint outside the CREDITS table with no reported cost falls back to 1 credit", async () => {
+    const { c } = cached(() => ({ ok: 1 }));
+    await c.post("totally/unknown-endpoint", {});
+    expect(c.calls[0].credits).toBe(1);
+  });
+});
+
+describe("DiskCache", () => {
+  it("round-trips an entry to disk and survives a corrupt file (returns undefined, never throws)", () => {
+    const dir = mkdtempSync(join(tmpdir(), "holderatlas-cache-"));
+    const d = new DiskCache(dir);
+    expect(d.get("missing")).toBeUndefined();
+    d.set("k", { storedAt: "2026-09-18T00:00:00Z", ttlMs: 1000, endpoint: "tgm/holders", body: {}, text: '{"v":1}' });
+    expect(d.get("k")?.text).toBe('{"v":1}');
+    writeFileSync(join(dir, "corrupt.json"), "{not json");
+    expect(d.get("corrupt")).toBeUndefined();
+  });
+  it("creates its directory on construction", () => {
+    const dir = join(mkdtempSync(join(tmpdir(), "holderatlas-cache-")), "nested");
+    const d = new DiskCache(dir);
+    d.set("k", { storedAt: "x", ttlMs: 1, endpoint: "e", body: {}, text: "{}" });
+    expect(d.get("k")?.text).toBe("{}");
+  });
+});
+
+describe("cachedClientFromEnv", () => {
+  it("builds a CachedNansenClient from NANSEN_API_KEY", () => {
+    const prev = process.env.NANSEN_API_KEY;
+    process.env.NANSEN_API_KEY = KEY;
+    try {
+      expect(cachedClientFromEnv({ store: new MemoryCache() })).toBeInstanceOf(CachedNansenClient);
+    } finally {
+      if (prev === undefined) delete process.env.NANSEN_API_KEY;
+      else process.env.NANSEN_API_KEY = prev;
+    }
+  });
+  it("falls back to an empty key when NANSEN_API_KEY is unset, which the client rejects", () => {
+    const prev = process.env.NANSEN_API_KEY;
+    delete process.env.NANSEN_API_KEY;
+    try {
+      expect(() => cachedClientFromEnv({ store: new MemoryCache() })).toThrow(/NANSEN_API_KEY/);
+    } finally {
+      if (prev !== undefined) process.env.NANSEN_API_KEY = prev;
+    }
   });
 });

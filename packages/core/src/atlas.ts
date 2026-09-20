@@ -148,7 +148,9 @@ export async function resolveToken(client: NansenClient, input: string, chain?: 
   if (chain && !isChain(chain)) throw new AtlasError("bad-chain", `unsupported chain "${chain}"`);
   const isAddr = EVM_ADDRESS.test(q) || SOLANA_ADDRESS.test(q);
   const res = await nansen.search(client, q);
-  const all: Candidate[] = (res.tokens ?? [])
+  // res.tokens is never nullish: SearchResponse.tokens is `z.array(...).default([])` with no `.optional()`/`.nullable()`,
+  // so a successful parse always yields an array (dead `?? []` removed 2026-09-20 — see coverage task commit).
+  const all: Candidate[] = res.tokens
     .filter((t) => isChain(t.chain))
     .map((t) => ({ symbol: t.symbol, name: t.name, chain: t.chain as Chain, address: t.address, marketCap: t.market_cap ?? null, rank: t.rank ?? null }));
   // exact symbol/name (or address) matches only: a typo must never silently map onto Nansen's fuzzy top hit and spend ~120
@@ -522,7 +524,10 @@ async function runAtlas(client: NansenClient, input: string, opts: AtlasOptions,
   }
 
   const agg = aggregate(rows);
-  const unknownEntities = [...new Set(rows.filter((r) => r.bucket === "other-entity").map((r) => r.entityLabel ?? ""))].filter(Boolean);
+  // entityLabel is never null/empty on a row bucketed "other-entity": that bucket is only reached when
+  // attributeLabel(label).entity is truthy, which itself requires label to be a non-empty 🏦-bearing string
+  // (see entityKey) — so the `?? ""` + `.filter(Boolean)` this replaced were dead (2026-09-20, coverage task).
+  const unknownEntities = [...new Set(rows.filter((r) => r.bucket === "other-entity").map((r) => r.entityLabel as string))];
   if (unknownEntities.length) warnings.push(`entities not in exchanges.json (counted as unattributed): ${unknownEntities.join(", ")}`);
   const failed = rows.filter((r) => r.bucket === "error").length;
   if (failed) warnings.push(`${failed} wallet${failed > 1 ? "s" : ""} could not be looked up (timeouts or errors) — shown as "lookup failed", never guessed`);
