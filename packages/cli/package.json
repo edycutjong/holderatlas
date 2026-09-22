@@ -1,6 +1,6 @@
 {
   "name": "holderatlas-cli",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Type a token. See where its holders actually are.",
   "license": "MIT",
   "type": "module",
@@ -8,6 +8,6 @@
     "holderatlas": "./src/cli.ts"
   },
   "dependencies": {
-    "@holderatlas/core": "1.3.0"
+    "@holderatlas/core": "1.4.0"
   }
 }
