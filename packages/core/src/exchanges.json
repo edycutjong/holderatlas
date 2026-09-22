@@ -573,6 +573,11 @@
       "country": "GB",
       "source": "Revolut Ltd, London (EEA licence via Revolut Bank UAB, Lithuania); crypto users predominantly UK/EEA — treated as GB",
       "aliases": ["revolut ltd"]
+    },
+    "blockchain.com": {
+      "country": "global",
+      "source": "Blockchain.com exchange (Blockchain Luxembourg S.A.; London/Miami operations), worldwide retail — no single home market; seen live on WLFI 2026-09-22 as the newest exchange touch of a 52 %-of-supply wallet",
+      "aliases": ["blockchain com", "blockchaincom"]
     }
   },
   "countries": {
