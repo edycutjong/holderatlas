@@ -193,6 +193,27 @@ describe("RateLimiter (via NansenClient.post)", () => {
       vi.useRealTimers();
     }
   });
+  it("the per-minute window holds a request even when the per-second window is open (Nansen's 300/min cap)", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl: typeof fetch = async () => new Response("{}", { status: 200 });
+      const c = new NansenClient("nsn_test_key_0000000000000000000000", { fetchImpl, rps: 1000, rpm: 2, timeoutMs: 60_000 });
+      await c.post("tgm/holders", { a: 1 });
+      await c.post("tgm/holders", { a: 2 });
+      const third = c.post("tgm/holders", { a: 3 });
+      let done = false;
+      third.then(() => {
+        done = true;
+      });
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(done).toBe(false); // second window open, minute window full
+      await vi.advanceTimersByTimeAsync(31_000);
+      await third;
+      expect(done).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("clientFromEnv", () => {

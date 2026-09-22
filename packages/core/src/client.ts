@@ -33,8 +33,10 @@ export type CallListener = (e: CallEvent) => void;
 
 export type ClientOptions = {
   baseUrl?: string;
-  /** requests per second, client-side burst cap (Nansen: 300/min) */
+  /** requests per rolling second, client-side burst cap (default 5) */
   rps?: number;
+  /** requests per rolling minute, Nansen's documented cap (default 300) — the second window keeps a burst honest */
+  rpm?: number;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
   /**
@@ -89,19 +91,25 @@ export function sha256(text: string): string {
   return createHash("sha256").update(text).digest("hex");
 }
 
-/** Minimal token bucket: at most `rps` requests per rolling second. */
+/** Two sliding windows: at most `rps` requests per rolling second AND at most `rpm` per rolling minute. */
 class RateLimiter {
   private timestamps: number[] = [];
-  constructor(private rps: number) {}
+  constructor(
+    private rps: number,
+    private rpm: number,
+  ) {}
   async take(): Promise<void> {
     for (;;) {
       const now = Date.now();
-      this.timestamps = this.timestamps.filter((t) => now - t < 1000);
-      if (this.timestamps.length < this.rps) {
+      this.timestamps = this.timestamps.filter((t) => now - t < 60_000);
+      const lastSecond = this.timestamps.filter((t) => now - t < 1000);
+      if (lastSecond.length < this.rps && this.timestamps.length < this.rpm) {
         this.timestamps.push(now);
         return;
       }
-      await new Promise((r) => setTimeout(r, 1000 - (now - this.timestamps[0]) + 5));
+      // wait for whichever window is full to open by one slot
+      const wait = lastSecond.length >= this.rps ? 1000 - (now - lastSecond[0]) : 60_000 - (now - this.timestamps[0]);
+      await new Promise((r) => setTimeout(r, wait + 5));
     }
   }
 }
@@ -127,7 +135,10 @@ export class NansenClient {
       throw new Error("NANSEN_API_KEY missing or malformed (expected nsn_…)");
     }
     this.baseUrl = opts.baseUrl ?? "https://api.nansen.ai/api/v1";
-    this.limiter = new RateLimiter(opts.rps ?? 5); // Nansen cap is 300/min; an atlas makes ~100 sequential calls, 5 rps keeps a full run at 300/min with headroom for a second visitor
+    // Nansen's cap is 300/min. 5 rps keeps one ~110-call atlas inside it with headroom for a second visitor; the rolling
+    // 300/min window is the hard stop for a third. Measured 2026-09-22 (docs/BENCH.md): 8-wide under 10 rps only moved
+    // cold p50 40.3 → 34.5 s and introduced 3 failed calls in 441 — per-call latency, not the pool, is the ceiling.
+    this.limiter = new RateLimiter(opts.rps ?? 5, opts.rpm ?? 300);
     this.timeoutMs = opts.timeoutMs ?? 8000; // Nansen occasionally hangs on very large tokens; 8 s + one retry caps a call at ~17 s
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.maxCredits = opts.maxCredits ?? Infinity;
