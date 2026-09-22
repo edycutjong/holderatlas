@@ -20,7 +20,7 @@
 ![Next.js](https://img.shields.io/badge/Next.js_15-black?style=flat&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![Nansen API](https://img.shields.io/badge/Nansen_API-5_endpoints-7c3aed?style=flat&labelColor=0a0e13)
-![tests](https://img.shields.io/badge/tests-214%20passing-22c55e?style=flat)
+![tests](https://img.shields.io/badge/tests-220%20passing-22c55e?style=flat)
 ![generated cases](https://img.shields.io/badge/generated_cases-24%2C000-22c55e?style=flat)
 ![fixtures](https://img.shields.io/badge/fixtures-12%2F12%20replay%20offline-22c55e?style=flat)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat)](LICENSE)
@@ -69,7 +69,7 @@ attributable = Σ supply placed on a country / analysed supply         ← print
 atlasHash    = sha256(token + every row's attribution + the number)   # a replay and a live run that agree hash identically
 ```
 
-Rules with live numbers in [docs/SCORING.md](docs/SCORING.md). The table is data, one source per row: [packages/core/src/exchanges.json](packages/core/src/exchanges.json) (133 exchanges).
+Rules with live numbers in [docs/SCORING.md](docs/SCORING.md). The table is data, one source per row: [packages/core/src/exchanges.json](packages/core/src/exchanges.json) (134 exchanges).
 
 ## 🏗️ Architecture & Tech Stack
 
@@ -93,7 +93,7 @@ flowchart LR
 | Layer | Choice | Why |
 |---|---|---|
 | Engine | TypeScript, `packages/core` — `atlas()`, zod-validated Nansen bodies, sha256 per response | one function for CLI, web, seed/verify/bench |
-| Client | fetch, 5 rps bucket, 8 s timeout, 1 retry on 429/5xx, read-through cache (TTL 24 h), `NANSEN_OFFLINE` replay | a hung call never hangs the picture; warm map = 0 credits |
+| Client | fetch, 5 rps + 300/min buckets, 8 s timeout, 1 retry on 429/5xx, read-through cache (TTL 24 h), `NANSEN_OFFLINE` replay | a hung call never hangs the picture; warm map = 0 credits |
 | Picture | one inline SVG (1600×900): hero number, Natural Earth outlines, bubbles, ranked bar; literal colours | exported to PNG on a canvas; reused by `/api/og` |
 | Web | Next.js 15, React 19, plain CSS | the page streams the same events the CLI prints |
 | Deploy | Vercel (`vercel.json` builds `apps/web`), key as a sensitive env, deployment protection off | one env var, nothing else |
@@ -125,12 +125,12 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 
 | Metric | Value | Source |
 |---|---|---|
-| Tests | **214 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash — **100% statements/branches/functions/lines** on `packages/core/src` (enforced: `vitest.config.ts` thresholds) | `packages/core/test/` |
+| Tests | **220 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash — **100% statements/branches/functions/lines** on `packages/core/src` (enforced: `vitest.config.ts` thresholds) | `packages/core/test/` |
 | Property-based verification | **24,000 generated cases** (fast-check) = **14,000 property cases** — shares partition the supply, global never attributed, structural never in the denominator, hash purity, label normaliser, every table key resolves (7 × 2,000) — + **10,000 generated malformed queries** → 400 with zero fetches | `property.test.ts`, `boundary.test.ts` |
 | Permission boundary | the server key never reaches a client (atlas, events, provenance, cache keys, errors) | `boundary.test.ts`, [SECURITY.md](.github/SECURITY.md) |
 | Spend guard | only the page's own fetch (run marker) may go live — a bare GET of `/api/atlas` (crawlers, unfurlers, `curl`) gets the labelled fixture replay or a 202, never a Nansen call · 4 cold maps / IP / min · 3,000 live credits / day; past the ceiling a recorded fixture replays at 0 credits, labelled, or an honest 503 | `apps/web/lib/guard.ts`, `guard.test.ts` |
 | Fixtures | 12/12 atlases reproduced offline, zero network, zero credits — including a recorded timeout replayed as a timeout | `npm run verify`, `fixtures/*.json` |
-| Cold latency | p50 **40.3 s** · p95 **59.0 s** (4 tokens, live, 4-wide pool under 5 rps) | [docs/BENCH.md](docs/BENCH.md) |
+| Cold latency | p50 **40.3 s** · p95 **59.0 s** (4 tokens, live, 4-wide pool under 5 rps) — an 8-wide pool under 10 rps was measured 2026-09-22 and rejected: p50 34.5 s, p95 58.1 s, 3 failed calls in 441 (Nansen's per-call latency is the ceiling, not the pool) | [docs/BENCH.md](docs/BENCH.md) |
 | Warm latency | p50 **7 ms** | [docs/BENCH.md](docs/BENCH.md) |
 | Credits per map | mean **118**, max 121 | [docs/BENCH.md](docs/BENCH.md) |
 | Clean clone → first map | **54 s** (clone 1 · install 5 · first live map 34 · verify 1 · build 10 · tests 3) | see Getting Started |
@@ -141,7 +141,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 - **Numbers come from scripts.** [docs/BENCH.md](docs/BENCH.md) is the output of `npm run bench`; [DEMO.md](DEMO.md) is pasted CLI output. The day-one spike (6 tokens) gave a median of 40.6 % placed on the five EVM tokens — the number this entry had to show before any UI was written.
 - **Grey is never hidden.** Global-exchange custody, wallets with no exchange trace, entities outside the table, unnamed Solana exchanges and failed lookups are bars of the same chart, in the same scale, with wallet counts.
 
-### Honest limits (6)
+### Honest limits (7)
 
 1. **Solana cannot be named.** The transfer lookup has no Solana support; Solana tokens show their custody share with every exchange "unnamed" and 0 % placed.
 2. **Supply-weighted means whales decide.** 86 % of LINK's analysed supply is one 2017 team wallet with no exchange trace → 4 % placed; the by-wallet share (44 %) is printed beside the number for exactly this reason.
@@ -149,6 +149,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 4. **Most recent exchange wins** — one lookup per wallet; a wallet that used Upbit last year and Binance last week is Binance.
 5. **USDC-class tokens time out** on Nansen's per-wallet transfer filter; the engine probes, shrinks the window to 30 days, and skips the rest with a named reason rather than guessing.
 6. **Top-100 holders, up to 52 examined** (12 custody + 40 people; a "person" the contract check turns out to be a contract leaves the number) — a sample weighted to whales and custody, not the retail tail; the caption says how many wallets are in the number and how much of the top-100 supply that is.
+7. **Nansen's 🏦 is not always an exchange.** DEX pools, staking contracts and bridges wear the same mark ("🤖 🏦 PancakeSwap: CAKE Staking Pool", "🤖 🏦 Uniswap: PoolManager V4") and the `label_type: exchange` holders filter returns them. The engine reads the name: a "custody" holder that is a pool/contract is reclassified structural and leaves the denominator (CAKE: 5 of 12 custody rows, live 2026-09-18); a person whose only 🏦 counterparty is a pool is "no exchange trace", never "entity not in the table". A table exchange always wins ("🏦 Binance: Bridge" is still Binance).
 
 ## 🚀 Getting Started
 
@@ -185,7 +186,7 @@ Measured on a clean clone from GitHub (macOS, Node 22, warm npm cache, 2026-09-1
 
 ```bash
 npm run lint && npm run format:check && npm run typecheck
-npm test                       # 214 tests
+npm test                       # 220 tests
 npm run test:coverage          # v8 coverage on packages/core/src
 npm run verify                 # 12/12 offline
 npm run check                  # README claims vs the tree, kitchen/secret scan, git-history key scan
@@ -195,7 +196,7 @@ npm run ci                     # all of the above
 ## 📁 Project Structure
 
 ```
-packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (214)
+packages/core     client · cache · nansen (zod) · labels + exchanges.json · atlas (the engine) · fixtures · test/ (220)
 packages/cli      npm run holderatlas -- <token> [--chain] [--holders 40] [--custody 12] [--json --explain --no-cache]
 apps/web          Next 15: the page (stream → picture → PNG) · /t/<chain>/<address> · /api/atlas · /api/og · /judge · guard
 scripts           spike · seed · verify · bench · check_submission_readiness

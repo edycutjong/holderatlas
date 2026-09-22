@@ -30,12 +30,12 @@ flowchart LR
 ## Layout
 ```
 packages/core/src
-  client.ts      NansenClient: apikey header, 5 rps bucket, 8 s timeout, 1 retry on 429/5xx/timeout, sha256 per response, credit table,
+  client.ts      NansenClient: apikey header, 5 rps + 300/min buckets, 8 s timeout, 1 retry on 429/5xx/timeout, sha256 per response, credit table,
                  subscribe(): start/end call events (the end carries the recorded Call itself — the rail and the drawer share one object)
   cache.ts       CachedNansenClient: read-through disk/memory cache, TTL, NANSEN_OFFLINE, timeout markers for deterministic replay
   nansen.ts      zod-validated bodies/responses for the five endpoints; chains; the 1-year window
   labels.ts      entityKey() normaliser, exchanges.json lookup, structural-tag rule
-  exchanges.json 133 exchange entities → country (ISO) or global, one source each
+  exchanges.json 134 exchange entities → country (ISO) or global, one source each
   atlas.ts       the engine: resolve → holders → partition → probes → 4-wide lookup pool → contract check → aggregate → hash
   fixtures.ts    recorded-run format, read/write, fixtureStore()
 packages/cli/src/cli.ts   the reproduce path: bars, the number, --explain call table, --json
@@ -78,7 +78,7 @@ docs      SCORING.md · BENCH.md · DX-REPORT.md · screenshots/
 ## Residual risks
 | Risk | Mitigation |
 |---|---|
-| Nansen latency (1.7–2 s per call) makes a cold map 40–60 s | stream; 4-wide pool; the recording runs warm with the timestamp visible |
+| Nansen latency (1.7–2 s per call) makes a cold map 40–60 s | stream; 4-wide pool (8-wide under 10 rps measured 2026-09-22: p50 −6 s, 3 failed calls — rejected, docs/BENCH.md); the recording runs warm with the timestamp visible |
 | Supply-weighted number dominated by one whale (LINK) | wallet-weighted share printed beside it; contract check removes deployed contracts |
 | Label drift ("Upbit : Link Wallet") | normaliser + alias table; every spelling seen live pinned in tests; unknown 🏦 → visible "ENTITY" bar |
 | Solana | honest unsupported state, never a crash |

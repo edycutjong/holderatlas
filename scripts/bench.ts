@@ -63,7 +63,7 @@ const allCold = rows.flatMap((r) => r.coldMs),
   allCalls = rows.flatMap((r) => r.calls);
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
 console.log(
-  `## Benchmark — ${new Date().toISOString().slice(0, 16)}Z · ${set.length} tokens × ${runs} cold run${runs > 1 ? "s" : ""} · live Nansen API · defaults (12 custody + 40 human wallets, 4-wide lookup pool, 5 rps)\n`,
+  `## Benchmark — ${new Date().toISOString().slice(0, 16)}Z · ${set.length} tokens × ${runs} cold run${runs > 1 ? "s" : ""} · live Nansen API · defaults (12 custody + 40 human wallets, 4-wide lookup pool, 5 rps under a 300/min window)\n`,
 );
 console.log(`| token | cold p50 | cold p95 | warm p50 | credits | live calls | failed | result | warm hash = cold |`);
 console.log(`|---|---|---|---|---|---|---|---|---|`);

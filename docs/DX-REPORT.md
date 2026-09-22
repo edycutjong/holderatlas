@@ -25,7 +25,9 @@ Everything below was measured live with the `meridian` key; probe bodies are in 
    "Coinbase", "Coinbase Prime: Custody Wallet", "Coinbase: LINK", "Coinbase: Main Wallet". A normaliser + alias table is
    unavoidable; every spelling seen live is pinned in `labels.test.ts`.
 9. **Latency is the product's ceiling.** Live calls average 1.7 s (`tgm/transfers`) to 2.0 s (lookup); a 110-call map is 40–60 s
-   cold even with a 4-wide pool under the 5 rps client bucket. A batch lookup (`counterparties/batch` exists — a
+   cold even with a 4-wide pool under the 5 rps client bucket. Widening the pool does not help: 8-wide under 10 rps
+   (measured 2026-09-22, docs/BENCH.md) moved p50 only 40.3 → 34.5 s and produced 3 failed calls in 441 where 4-wide had
+   0 in 444 — the per-call latency, not the client, is the ceiling. A batch lookup (`counterparties/batch` exists — a
    `transfer-lookup/batch` would too) would make the map a 5-second experience.
 
 ## Wishes (5)

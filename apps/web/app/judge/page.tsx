@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: "The claim, the 30-second path, the receipts, the real reproduce command, and the honest limitations.",
 };
 
-const TEST_COUNT = 214;
+const TEST_COUNT = 220;
 const CLEAN_CLONE_S = "54";
 
 export default function Judge() {
@@ -92,7 +92,7 @@ export default function Judge() {
               <td>
                 <code>search/general</code> · <code>tgm/holders</code> (all + <code>label_type: exchange</code>) · <code>tgm/transfers</code> (CEX-only, per
                 wallet) · <code>transaction-with-token-transfer-lookup</code> · <code>profiler/address/related-wallets</code> — every placement is one of their
-                response fields joined to <a href={`${REPO}/blob/main/packages/core/src/exchanges.json`}>exchanges.json</a> (133 rows, one source each)
+                response fields joined to <a href={`${REPO}/blob/main/packages/core/src/exchanges.json`}>exchanges.json</a> (134 rows, one source each)
               </td>
             </tr>
             <tr>
