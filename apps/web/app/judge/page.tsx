@@ -104,11 +104,12 @@ export default function Judge() {
               </td>
             </tr>
             <tr>
-              <th>Calls verifiable from the clone</th>
+              <th>Calls accounted for in the repo</th>
               <td>
-                <b>2,065 live Nansen calls</b> whose responses or hashes are in the repo: 1,070 in <code>fixtures/</code> (12 runs, every raw response, 1,139
-                credits) + 885 in <a href={`${REPO}/blob/main/docs/BENCH.md`}>docs/BENCH.md</a> + 110 in <a href={`${REPO}/blob/main/DEMO.md`}>DEMO.md</a>; the
-                account-wide total is on Nansen&rsquo;s usage dashboard
+                <b>2,065 live Nansen calls, no run counted twice</b>: 1,070 fetched live by <code>npm run seed</code> (per-fixture <code>live.calls</code>,
+                uncached only) + 110 in the PEPE hero run in <a href={`${REPO}/blob/main/DEMO.md`}>DEMO.md</a> (the PEPE fixture holds those responses from
+                cache, <code>live.calls</code> 0) + 885 in the two bench tables in <a href={`${REPO}/blob/main/docs/BENCH.md`}>docs/BENCH.md</a> (444 + 441,
+                fresh in-memory store each run); the account-wide total is on Nansen&rsquo;s usage dashboard
               </td>
             </tr>
             <tr>
