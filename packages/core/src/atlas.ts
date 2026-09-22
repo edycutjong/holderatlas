@@ -5,7 +5,7 @@
 import { sha256, NansenError, BudgetError, type Call, type CallEvent, type NansenClient } from "./client.js";
 import { canonicalize } from "./cache.js";
 import { nansen, window, isChain, NAMING_CHAINS, type Chain, type HolderRow, type TokenTransfer } from "./nansen.js";
-import { attributeLabel, isStructural, countryName, type Country } from "./labels.js";
+import { attributeLabel, isStructural, isDexOrContractEntity, countryName, type Country } from "./labels.js";
 
 export type Token = { symbol: string; name: string; chain: Chain; address: string; marketCap: number | null };
 export type Candidate = Token & { rank: number | null };
@@ -109,7 +109,7 @@ export type AtlasOptions = {
   /** exchange-custody wallets to examine (top by supply) */
   custody?: number;
   now?: number;
-  /** wallets looked up at once (the client's 5 rps bucket is the real cap); 1 = strictly sequential */
+  /** wallets looked up at once (the client's 5 rps / 300 per min buckets are the real cap); 1 = strictly sequential */
   concurrency?: number;
   onProgress?: (e: AtlasEvent) => void;
 };
@@ -207,7 +207,7 @@ export function exchangeLabelFor(transfers: TokenTransfer[] | null | undefined, 
   const pool = sameToken.length ? sameToken : transfers;
   const candidates: string[] = [];
   const add = (l: string | null | undefined) => {
-    if (l && attributeLabel(l).entity && !candidates.includes(l)) candidates.push(l);
+    if (l && attributeLabel(l).entity && !isDexOrContractEntity(l) && !candidates.includes(l)) candidates.push(l);
   };
   if (kind === "custody") {
     // the wallet itself is the exchange: its own label names it
@@ -228,6 +228,26 @@ export function exchangeLabelFor(transfers: TokenTransfer[] | null | undefined, 
     }
   }
   return candidates.find((l) => attributeLabel(l).exchange) ?? candidates[0] ?? null;
+}
+
+/** True when every 🏦 party in the lookup is a DEX pool / contract — the "CEX-only" transfer filter leaked a swap or a stake. */
+export function onlyDexParties(transfers: TokenTransfer[] | null | undefined): boolean {
+  const marked = (transfers ?? []).flatMap((t) => [t.from_address_label, t.to_address_label]).filter((l) => attributeLabel(l).entity);
+  return marked.length > 0 && marked.every((l) => isDexOrContractEntity(l));
+}
+
+/**
+ * A "custody" wallet whose own 🏦 label turns out to be a pool / staking / bridge contract ("🤖 🏦 PancakeSwap: CAKE Staking
+ * Pool" — Nansen's `label_type: exchange` filter returns those too). It is structural, not exchange custody: excluded from the
+ * analysed supply like every other pool, never counted as an unknown entity.
+ */
+export function custodyIsContract(transfers: TokenTransfer[] | null | undefined, wallet: string): string | null {
+  const w = lc(wallet);
+  for (const t of transfers ?? []) {
+    if (lc(t.from_address) === w && isDexOrContractEntity(t.from_address_label)) return t.from_address_label as string;
+    if (lc(t.to_address) === w && isDexOrContractEntity(t.to_address_label)) return t.to_address_label as string;
+  }
+  return null;
 }
 
 /** Partition holder rows: burn/pool/contract → structural; in the exchange set → custody; else human. Sorted by supply desc. */
@@ -448,12 +468,32 @@ async function runAtlas(client: NansenClient, input: string, opts: AtlasOptions,
           row.error = `transfer lookup: ${l.error}`;
           row.bucket = "error";
         } else {
-          const label = exchangeLabelFor(l.data.data[0]?.token_transfer_array, p.address, p.kind, token.address);
+          const transfers = l.data.data[0]?.token_transfer_array;
+          const label = exchangeLabelFor(transfers, p.address, p.kind, token.address);
           const attr = attributeLabel(label);
           row.entityLabel = label;
           row.exchange = attr.exchange;
           row.country = attr.country;
-          row.bucket = attr.country && attr.country !== "global" ? "country" : attr.country === "global" ? "global" : attr.entity ? "other-entity" : "unnamed";
+          const contractLabel = !label && p.kind === "custody" ? custodyIsContract(transfers, p.address) : null;
+          if (contractLabel) {
+            // the "exchange" holder is a pool / staking / bridge contract wearing Nansen's 🏦: structural, out of the denominator
+            row.kind = "structural";
+            row.label = row.label ? `${row.label} · ${contractLabel}` : contractLabel;
+            row.share = 0;
+            row.bucket = "untraced";
+            row.txHash = null;
+            row.txAt = null;
+            row.via = null;
+            emit({ type: "reclass", row, reason: `lookup: ${contractLabel} is a pool/contract, not exchange custody` });
+          } else if (!label && onlyDexParties(transfers)) {
+            // the exchange-filtered transfer was a swap or a stake (Nansen marks DEX pools 🏦 too): no exchange trace, not a table gap
+            row.bucket = "untraced";
+            row.txHash = null;
+            row.txAt = null;
+            row.via = null;
+          } else
+            row.bucket =
+              attr.country && attr.country !== "global" ? "country" : attr.country === "global" ? "global" : attr.entity ? "other-entity" : "unnamed";
         }
       }
     } else if (row.error) row.bucket = "error";

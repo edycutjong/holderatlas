@@ -28,6 +28,13 @@ with a named reason. A recorded timeout is stored in the fixture and replayed as
 counterparty's for humans), then any 🏦 party in the transaction; a label whose entity is in the table beats one that is not
 (Nansen puts 🏦 on DEX pools and custodians too). **Most recent exchange wins** — one lookup per wallet.
 
+A 🏦 label that names no table exchange AND reads as a pool / staking / bridge / token contract (`isDexOrContractEntity()`,
+the same structural pattern as the partition) is not an exchange at all: for a human it is skipped, and a transfer whose only
+🏦 parties are such contracts is **untraced** (`onlyDexParties()`), never other-entity; a "custody" wallet whose own label is
+such a contract (`custodyIsContract()` — the `label_type: exchange` filter returns pools too) is reclassified **structural** and
+leaves the denominator, exactly like the partition would have done had the holder row carried the name. A table exchange
+always wins the tie ("🏦 Binance: Bridge" is Binance).
+
 `entityKey()`: strip the `[0x…]` suffix, emoji and zero-width characters, cut at `:`, drop trailing numerals, lower-case →
 `upbit`, `binance`, `coinbase prime` → alias table → canonical key → `country` or `global`.
 

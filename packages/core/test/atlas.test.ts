@@ -1,7 +1,36 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { atlas, aggregate, atlasHash, exchangeLabelFor, partition, resolveToken, AtlasError, type AtlasEvent, type WalletRow } from "../src/atlas.js";
+import {
+  atlas,
+  aggregate,
+  atlasHash,
+  exchangeLabelFor,
+  onlyDexParties,
+  custodyIsContract,
+  partition,
+  resolveToken,
+  AtlasError,
+  type AtlasEvent,
+  type WalletRow,
+} from "../src/atlas.js";
+import { isDexOrContractEntity } from "../src/labels.js";
 import { CachedNansenClient, MemoryCache } from "../src/cache.js";
-import { fakeClient, pepeRoutes, PEPE, BINANCE_14, UPBIT, COINBASE, POOL, BURN, CONTRACT, addr, searchTokens, holders, transfers, lookup } from "./helpers.js";
+import {
+  fakeClient,
+  pepeRoutes,
+  PEPE,
+  BINANCE_14,
+  UPBIT,
+  COINBASE,
+  POOL,
+  BURN,
+  CONTRACT,
+  addr,
+  searchTokens,
+  holders,
+  transfers,
+  lookup,
+  H,
+} from "./helpers.js";
 
 const NOW = Date.parse("2026-09-18T12:00:00Z");
 
@@ -289,9 +318,9 @@ describe("atlas() end to end on the PEPE model", () => {
     // and the by-wallets number uses that same denominator: US 3 + KR 1 placed of 7
     expect(a.attributableByWallets).toBeCloseTo(4 / 7, 6);
   });
-  it("the hash is stable across runs and across completion order (concurrency 1 vs 4)", async () => {
+  it("the hash is stable across runs and across completion order (concurrency 1 vs 8)", async () => {
     const a = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 1 });
-    const b = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 4 });
+    const b = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW, concurrency: 8 });
     expect(a.hash).toBe(b.hash);
     expect(a.rows.map((r) => r.address)).toEqual(b.rows.map((r) => r.address));
   });
@@ -373,6 +402,52 @@ describe("atlas() end to end on the PEPE model", () => {
     const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
     expect(a.otherEntity.wallets).toBe(1);
     expect(a.warnings.join()).toMatch(/SomeNewCex/);
+  });
+  it("a human wallet whose only 🏦 party is a DEX pool is 'no exchange trace', not an entity gap (WLFI live 2026-09-22)", async () => {
+    const base = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW });
+    const routes = (e: string, b: Record<string, unknown>) => {
+      const out = pepeRoutes(e, b) as { data?: Array<{ token_transfer_array: Array<{ to_address_label: string | null }> }> };
+      if (e === "transaction-with-token-transfer-lookup" && b.transaction_hash === H(4))
+        out.data![0].token_transfer_array[0].to_address_label = "🤖 🏦 Uniswap: PoolManager V4 [0x000000]";
+      return out;
+    };
+    const a = await atlas(fakeClient(routes), "PEPE", { now: NOW });
+    expect(a.otherEntity.wallets).toBe(0);
+    expect(a.untraced.wallets).toBe(base.untraced.wallets + 1);
+    expect(a.global.wallets).toBe(base.global.wallets - 1);
+    expect(a.warnings.join()).not.toMatch(/Uniswap/);
+    const moved = a.rows.find((r) => r.address === addr(4));
+    expect(moved).toMatchObject({ kind: "human", bucket: "untraced", entityLabel: null, txHash: null, via: null });
+    expect(a.examined.custody).toBe(base.examined.custody);
+  });
+  it("a 'custody' wallet whose own 🏦 label is a pool / staking contract is reclassified structural (CAKE live 2026-09-18)", async () => {
+    const base = await atlas(fakeClient(pepeRoutes), "PEPE", { now: NOW });
+    const routes = (e: string, b: Record<string, unknown>) => {
+      const out = pepeRoutes(e, b) as { data?: Array<{ token_transfer_array: Array<{ to_address_label: string | null }> }> };
+      if (e === "transaction-with-token-transfer-lookup" && b.transaction_hash === H(11))
+        out.data![0].token_transfer_array[0].to_address_label = "🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]";
+      return out;
+    };
+    const events: AtlasEvent[] = [];
+    const a = await atlas(fakeClient(routes), "PEPE", { now: NOW, onProgress: (ev) => events.push(ev) });
+    const row = a.rows.find((r) => r.address === UPBIT)!;
+    expect(row.kind).toBe("structural");
+    expect(row.share).toBe(0);
+    expect(row.label).toMatch(/PancakeSwap: CAKE Staking Pool/);
+    expect(a.otherEntity.wallets).toBe(0);
+    expect(a.warnings.join()).not.toMatch(/PancakeSwap/);
+    expect(a.countries.find((c) => c.code === "KR")).toBeUndefined(); // Upbit's share is gone with the wallet
+    expect(events.some((ev) => ev.type === "reclass" && /pool\/contract/.test(ev.reason))).toBe(true);
+    // the denominator shrank: every remaining share is larger than before
+    expect(a.attributable).toBeGreaterThan(base.attributable - base.countries.find((c) => c.code === "KR")!.share);
+    // an unlabelled holder row gets the pool label as its only label
+    const bare = (e: string, b: Record<string, unknown>) => {
+      const out = routes(e, b) as { data?: Array<{ address: string; address_label: string | null }> };
+      if (e === "tgm/holders" && !b.label_type) for (const r of out.data!) if (r.address === UPBIT) r.address_label = null;
+      return out;
+    };
+    const b2 = await atlas(fakeClient(bare), "PEPE", { now: NOW });
+    expect(b2.rows.find((r) => r.address === UPBIT)!.label).toBe("🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]");
   });
   it("replays byte-for-byte from a cache at 0 credits with the same hash (the fixture path)", async () => {
     const store = new MemoryCache();
@@ -530,8 +605,40 @@ describe("exchangeLabelFor prefers a known exchange over a 🏦-tagged pool (WLF
       { from_address: w, from_address_label: null, to_address: addr(3), to_address_label: "🏦 MEXC: Deposit [0xbff099]", token_address: PEPE },
     ];
     expect(exchangeLabelFor(arr, w, "human", PEPE)).toBe("🏦 MEXC: Deposit [0xbff099]");
-    // with no known exchange in the transaction, the first entity still surfaces (as other-entity upstream)
-    expect(exchangeLabelFor(arr.slice(0, 1), w, "human", PEPE)).toMatch(/Uniswap/);
+    // a pool is not an exchange: with only the Uniswap party in the transaction there is no exchange label at all
+    expect(exchangeLabelFor(arr.slice(0, 1), w, "human", PEPE)).toBeNull();
+    expect(onlyDexParties(arr.slice(0, 1))).toBe(true);
+    expect(onlyDexParties(arr)).toBe(false);
+    expect(onlyDexParties([])).toBe(false);
+    expect(onlyDexParties(undefined)).toBe(false);
+  });
+  it("a 🏦 entity outside the table that is NOT a pool still surfaces as other-entity (Cobo, DEGEN live 2026-09-18)", () => {
+    const w = addr(1);
+    const arr = [{ from_address: w, from_address_label: null, to_address: addr(2), to_address_label: "\u200b\u200b🏦 Cobo [0x5a372b]", token_address: PEPE }];
+    expect(exchangeLabelFor(arr, w, "human", PEPE)).toMatch(/Cobo/);
+    expect(onlyDexParties(arr)).toBe(false);
+  });
+  it("custodyIsContract names the custody wallet's own pool label on either side, and null for a real exchange", () => {
+    const w = addr(9);
+    const pool = "🤖 🏦 PancakeSwap: CAKE-BNB v2 Liquidity Pool [0x0ed7e5]";
+    expect(custodyIsContract([{ from_address: w, from_address_label: pool, to_address: addr(2), to_address_label: null, token_address: PEPE }], w)).toBe(pool);
+    expect(custodyIsContract([{ from_address: addr(2), from_address_label: null, to_address: w, to_address_label: pool, token_address: PEPE }], w)).toBe(pool);
+    expect(
+      custodyIsContract([{ from_address: addr(2), from_address_label: null, to_address: w, to_address_label: "🏦 Upbit: Deposit", token_address: PEPE }], w),
+    ).toBeNull();
+    expect(
+      custodyIsContract([{ from_address: addr(2), from_address_label: pool, to_address: addr(3), to_address_label: null, token_address: PEPE }], w),
+    ).toBeNull(); // pool is not the wallet
+    expect(custodyIsContract(undefined, w)).toBeNull();
+  });
+  it("a table exchange keeps its label even when the role reads structural (🏦 Binance: Bridge)", () => {
+    const w = addr(1);
+    const arr = [{ from_address: w, from_address_label: null, to_address: addr(2), to_address_label: "🏦 Binance: Bridge [0x1234ab]", token_address: PEPE }];
+    expect(exchangeLabelFor(arr, w, "human", PEPE)).toBe("🏦 Binance: Bridge [0x1234ab]");
+    expect(isDexOrContractEntity("🏦 Binance: Bridge [0x1234ab]")).toBe(false);
+    expect(isDexOrContractEntity("🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]")).toBe(true);
+    expect(isDexOrContractEntity("High Activity [0x16c794]")).toBe(false);
+    expect(isDexOrContractEntity(null)).toBe(false);
   });
 });
 

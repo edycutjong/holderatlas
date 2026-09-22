@@ -3143,11 +3143,11 @@
     "naming": true,
     "holdersFetched": 100,
     "examined": {
-      "custody": 12,
+      "custody": 7,
       "human": 39
     },
-    "coverage": 0.04789569533730479,
-    "structuralShare": 0.9479603862733278,
+    "coverage": 0.041338450178771934,
+    "structuralShare": 0.9545176314318607,
     "rows": [
       {
         "address": "0x000000000000000000000000000000000000dead",
@@ -3171,7 +3171,7 @@
         "label": "Token Millionaire",
         "supply": 78977809.737,
         "kind": "custody",
-        "share": 0.31239719216497525,
+        "share": 0.36195069421946124,
         "topShare": 0.014962480740163113,
         "entityLabel": "🏦 Binance: Reserve Address [0xf97781]",
         "exchange": "binance",
@@ -3181,14 +3181,14 @@
         "txHash": "0x85d6df20c27a473c789679471ad0eeabaf8e24b855bbd6aca0116026d7474389",
         "txAt": "2026-09-18T09:45:34Z",
         "calls": 2,
-        "credits": 1
+        "credits": 0
       },
       {
         "address": "0x5a52e96bacdabb82fd05763e25335261b270efcb",
         "label": "Token Billionaire",
         "supply": 41330576.7632,
         "kind": "custody",
-        "share": 0.16348334012273535,
+        "share": 0.18941562195441078,
         "topShare": 0.007830148251243509,
         "entityLabel": "🏦 Binance [0x5a52e9]",
         "exchange": "binance",
@@ -3198,14 +3198,14 @@
         "txHash": "0xddf1ad7d0c587736ab179fa738858fbae940aafd84765ae6a5380c55f3f04253",
         "txAt": "2026-05-07T01:36:57Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xa5f8c5dbd5f286960b9d90548680ae5ebff07652",
         "label": "Token Millionaire",
         "supply": 26751047.483303167,
         "kind": "custody",
-        "share": 0.10581392607727284,
+        "share": 0.12259848987864763,
         "topShare": 0.005068031565841151,
         "entityLabel": null,
         "exchange": null,
@@ -3215,24 +3215,24 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x45c54210128a065de780c4b0df3d16664f7f859e",
-        "label": "Token Millionaire",
+        "label": "Token Millionaire · 🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]",
         "supply": 13436874.515919363,
-        "kind": "custody",
-        "share": 0.05314963638805222,
+        "kind": "structural",
+        "share": 0,
         "topShare": 0.002545638791730678,
-        "entityLabel": "🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]",
+        "entityLabel": null,
         "exchange": null,
         "country": null,
-        "bucket": "other-entity",
-        "via": "custody",
-        "txHash": "0xc8f021f51d125017f0bd8ed2ed8ee7a99249c30ae0f35c789f375fefd2dcc22b",
-        "txAt": "2025-10-11T17:49:16Z",
-        "calls": 3,
-        "credits": 3
+        "bucket": "untraced",
+        "via": null,
+        "txHash": null,
+        "txAt": null,
+        "calls": 2,
+        "credits": 0
       },
       {
         "address": "0x86ac3974e2bd0d60825230fa6f355ff11409df5c",
@@ -3249,31 +3249,31 @@
         "txHash": null,
         "txAt": null,
         "calls": 3,
-        "credits": 3
+        "credits": 0
       },
       {
         "address": "0xb274202daba6ae180c665b4fbe59857b7c3a8091",
-        "label": "Token Millionaire",
+        "label": "Token Millionaire · 🤖 🏦 PancakeSwap: CAKE Bridge [0xb27420]",
         "supply": 9967240.327826904,
-        "kind": "custody",
-        "share": 0.03942547789582331,
+        "kind": "structural",
+        "share": 0,
         "topShare": 0.0018883106778259974,
-        "entityLabel": "🤖 🏦 PancakeSwap: CAKE Bridge [0xb27420]",
+        "entityLabel": null,
         "exchange": null,
         "country": null,
-        "bucket": "other-entity",
-        "via": "custody",
-        "txHash": "0xc56c1c5c6c113ba06f378a087ad439a97f69640cf6e1a84647ecca5a19fc319d",
-        "txAt": "2025-10-11T08:35:27Z",
-        "calls": 3,
-        "credits": 3
+        "bucket": "untraced",
+        "via": null,
+        "txHash": null,
+        "txAt": null,
+        "calls": 2,
+        "credits": 0
       },
       {
         "address": "0x73feaa1ee314f8c655e354234017be2193c9e24e",
         "label": "Token Millionaire",
         "supply": 7272995.449344761,
         "kind": "custody",
-        "share": 0.028768376390406733,
+        "share": 0.033331713815710505,
         "topShare": 0.001377881390943833,
         "entityLabel": null,
         "exchange": null,
@@ -3283,14 +3283,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xd183f2bbf8b28d9fec8367cb06fe72b88778c86b",
         "label": "Token Millionaire",
         "supply": 5318603.172086033,
         "kind": "custody",
-        "share": 0.021037766212209985,
+        "share": 0.02437484803421307,
         "topShare": 0.001007618441077454,
         "entityLabel": null,
         "exchange": null,
@@ -3300,14 +3300,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x91b3927f100bb6c19e5434bfaba07d60670b98d6",
         "label": "Token Millionaire",
         "supply": 5259929.773303741,
         "kind": "human",
-        "share": 0.020805683237316127,
+        "share": 0.024105951270778053,
         "topShare": 0.0009965026656189625,
         "entityLabel": "🏦 Binance: Deposit [0x7d3217]",
         "exchange": "binance",
@@ -3317,48 +3317,48 @@
         "txHash": "0x2864fd3a26da5497e77a17b2e449431bc1fea9c7e9d4ec0f2b8aedc141b4d6d9",
         "txAt": "2025-09-24T07:25:39Z",
         "calls": 3,
-        "credits": 3
+        "credits": 0
       },
       {
         "address": "0x5692db8177a81a6c6afc8084c2976c9933ec1bab",
-        "label": "Token Millionaire",
+        "label": "Token Millionaire · 🤖 🏦 PancakeSwap: veCAKE Token [0x5692db]",
         "supply": 5223644.200342701,
-        "kind": "custody",
-        "share": 0.020662155439484384,
+        "kind": "structural",
+        "share": 0,
         "topShare": 0.000989628301941579,
-        "entityLabel": "🤖 🏦 PancakeSwap: veCAKE Token [0x5692db]",
+        "entityLabel": null,
         "exchange": null,
         "country": null,
-        "bucket": "other-entity",
-        "via": "custody",
-        "txHash": "0x87efd7e014587eedcb7a2a0dc82bb11a3f410ede78a1c1a3350d076d3d3f8fad",
-        "txAt": "2026-01-01T13:20:31Z",
-        "calls": 3,
-        "credits": 3
+        "bucket": "untraced",
+        "via": null,
+        "txHash": null,
+        "txAt": null,
+        "calls": 2,
+        "credits": 0
       },
       {
         "address": "0x0ed7e52944161450477ee417de9cd3a859b14fd0",
-        "label": "Token Millionaire",
+        "label": "Token Millionaire · 🤖 🏦 PancakeSwap: CAKE-BNB v2 Liquidity Pool [0x0ed7e5]",
         "supply": 4242493.279768009,
-        "kind": "custody",
-        "share": 0.016781207187079008,
+        "kind": "structural",
+        "share": 0,
         "topShare": 0.0008037475868245256,
-        "entityLabel": "🤖 🏦 PancakeSwap: CAKE-BNB v2 Liquidity Pool [0x0ed7e5]",
+        "entityLabel": null,
         "exchange": null,
         "country": null,
-        "bucket": "other-entity",
-        "via": "custody",
-        "txHash": "0xf1b56ba90c4c88e8bccb64fde7883afbc91349ffd8972fce732d07853198e9d1",
-        "txAt": "2026-09-18T11:07:14Z",
-        "calls": 2,
-        "credits": 2
+        "bucket": "untraced",
+        "via": null,
+        "txHash": null,
+        "txAt": null,
+        "calls": 1,
+        "credits": 0
       },
       {
         "address": "0x79906a1a14e5b51e656a25f281ea3c254ecdd326",
         "label": "Token Millionaire",
         "supply": 4013897.043195758,
         "kind": "human",
-        "share": 0.015876993425232994,
+        "share": 0.018395455966025803,
         "topShare": 0.0007604396399673506,
         "entityLabel": null,
         "exchange": null,
@@ -3368,14 +3368,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x057b6d0881484de13f254329317ca41d65913af1",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3385,14 +3385,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x1723c8707be30bd2b4f5f9a57158251fc49a83b8",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3402,14 +3402,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x962b79b6ac318d87013f339e6487a91feb1a2058",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3419,14 +3419,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x9651182a5804d343b13efef1bc7c9fbfcd001892",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3436,14 +3436,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x9ad16d63515975244e3e645a223cad510d0b52b1",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3453,14 +3453,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xa38e0ddbf8307c5949bf795ba7f3f710af956c82",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3470,14 +3470,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xca714d35d9157a574048183af5f17258f6bdbbcd",
         "label": "Token Millionaire",
         "supply": 3010422.7823968185,
         "kind": "human",
-        "share": 0.011907745068924743,
+        "share": 0.013796591974519353,
         "topShare": 0.0005703297299755129,
         "entityLabel": null,
         "exchange": null,
@@ -3487,14 +3487,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xc3121c4ca7402922e025e62e9bb4d5b244303878",
         "label": "Token Millionaire",
         "supply": 2678689.1402776525,
         "kind": "custody",
-        "share": 0.010595570691212954,
+        "share": 0.012276276047035094,
         "topShare": 0.0005074822257512115,
         "entityLabel": "🏦 Bybit [0xc3121c]",
         "exchange": "bybit",
@@ -3504,14 +3504,14 @@
         "txHash": "0x7beadc33dadd7a6a1c8f5289c1120ea7d92d6b26ae95861a6299e2de824f40ca",
         "txAt": "2026-09-18T10:37:01Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xceba60280fb0ecd9a5a26a1552b90944770a4a0e",
         "label": "Token Millionaire",
         "supply": 2639768.7788069593,
         "kind": "custody",
-        "share": 0.010441620971893321,
+        "share": 0.012097906301146964,
         "topShare": 0.0005001086968974149,
         "entityLabel": null,
         "exchange": null,
@@ -3521,14 +3521,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xfe4fe5b4575c036ac6d5cccfe13660020270e27a",
         "label": "Token Millionaire",
         "supply": 1987216.8382555412,
         "kind": "human",
-        "share": 0.007860447922793614,
+        "share": 0.009107298829461282,
         "topShare": 0.0003764816189248732,
         "entityLabel": "​​🤖 🏦 OKX: Router [0x7a7ad9]",
         "exchange": "okx",
@@ -3538,31 +3538,31 @@
         "txHash": "0x51ae9e1533f5d137f28b76099ef656d29f25eb3dc2fbcc5945a37af99f96c4f6",
         "txAt": "2026-09-18T11:08:04Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x7f51c8aaa6b0599abd16674e2b17fec7a9f674a1",
-        "label": "Token Millionaire",
+        "label": "Token Millionaire · 🤖 🏦 PancakeSwap: CAKE-USDT Liquidity Pool [0x7f51c8]",
         "supply": 1741445.3967862546,
-        "kind": "custody",
-        "share": 0.006888297536691248,
+        "kind": "structural",
+        "share": 0,
         "topShare": 0.0003299198002100711,
-        "entityLabel": "🤖 🏦 PancakeSwap: CAKE-USDT Liquidity Pool [0x7f51c8]",
+        "entityLabel": null,
         "exchange": null,
         "country": null,
-        "bucket": "other-entity",
-        "via": "custody",
-        "txHash": "0x6d381ef481b6e9600e2123935f20daa16d2f3ad2f74897e6959f0d42dae8a82d",
-        "txAt": "2026-09-18T09:26:32Z",
-        "calls": 2,
-        "credits": 2
+        "bucket": "untraced",
+        "via": null,
+        "txHash": null,
+        "txAt": null,
+        "calls": 1,
+        "credits": 0
       },
       {
         "address": "0x12791a3514897a767c5898db65d579f6bd2a6f69",
         "label": "Token Millionaire",
         "supply": 1574812.9802899999,
         "kind": "human",
-        "share": 0.0062291820305707055,
+        "share": 0.0072172760092984066,
         "topShare": 0.0002983510047368281,
         "entityLabel": null,
         "exchange": null,
@@ -3572,14 +3572,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x1fb0e9d52ec22f5606a97a4381efb244c653452c",
         "label": "Token Millionaire",
         "supply": 1462550.924932049,
         "kind": "human",
-        "share": 0.005785128808567222,
+        "share": 0.006702785559302073,
         "topShare": 0.0002770827669022007,
         "entityLabel": null,
         "exchange": null,
@@ -3589,14 +3589,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x4d88ac34c5a401cb6cdfd8feda2339f7fb04e4b9",
         "label": "Token Millionaire",
         "supply": 1250001.3378993336,
         "kind": "human",
-        "share": 0.0049443876636056155,
+        "share": 0.005728683202719382,
         "topShare": 0.0002368148851655828,
         "entityLabel": null,
         "exchange": null,
@@ -3606,14 +3606,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x28b2a59343bc503c98c3e807a282c2345082d7aa",
         "label": "Token Millionaire",
         "supply": 1125826.376741798,
         "kind": "human",
-        "share": 0.004453212872458735,
+        "share": 0.005159596600478646,
         "topShare": 0.00021328972701144751,
         "entityLabel": "🏦 Bithumb: Deposit [0xb2c772]",
         "exchange": "bithumb",
@@ -3623,14 +3623,14 @@
         "txHash": "0x1ab03cded6dcfa32f46e087884c6fc9a7ba07ec672a984dda27ca9d2ca0d040b",
         "txAt": "2026-09-07T12:29:05Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x62f958aff3b087bcbc6ca0fce21c271b1270b0b9",
         "label": "Token Millionaire",
         "supply": 1030893.3730233456,
         "kind": "human",
-        "share": 0.004077704816408684,
+        "share": 0.004724524183116648,
         "topShare": 0.00019530450756217072,
         "entityLabel": null,
         "exchange": null,
@@ -3640,14 +3640,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x0beef63e476b85a77ca4d7612b6efe9c253d99be",
         "label": "Token Millionaire",
         "supply": 960658.5979415656,
         "kind": "human",
-        "share": 0.0037998907493821143,
+        "share": 0.004402642306626872,
         "topShare": 0.0001819984096474485,
         "entityLabel": "🏦 Binance: Deposit [0x8add8c]",
         "exchange": "binance",
@@ -3657,14 +3657,14 @@
         "txHash": "0x9b6613388ae7f08709edbd5e987b997b5563abe4baff4bba03a9bc50e28d8fb4",
         "txAt": "2026-09-18T08:24:55Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x4208a71f19f49e6d5f9db65e87d03343586137d2",
         "label": null,
         "supply": 903148.0106647965,
         "kind": "human",
-        "share": 0.00357240728225572,
+        "share": 0.004139074640479713,
         "topShare": 0.00017110293081168897,
         "entityLabel": "🏦 Bitvavo: Hot Wallet [0xab782b]",
         "exchange": "bitvavo",
@@ -3674,14 +3674,14 @@
         "txHash": "0x4e4bf43e3c8ea0a99dabd4bce1519b9ea97aa5bb1092f2e1562a69e9b1dc952f",
         "txAt": "2026-09-07T12:26:13Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x35403f41cd57e470ed7a8fa11bf0eaaf080d5392",
         "label": "Token Millionaire",
         "supply": 896767.7659581534,
         "kind": "human",
-        "share": 0.0035471701866928262,
+        "share": 0.004109834351232015,
         "topShare": 0.00016989418257141016,
         "entityLabel": null,
         "exchange": null,
@@ -3691,14 +3691,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x9aa3a1d19dcb744731b30a66fc12fc7a88f7db66",
         "label": "Token Millionaire",
         "supply": 865725.6237857342,
         "kind": "human",
-        "share": 0.0034243828102671846,
+        "share": 0.003967570024748642,
         "topShare": 0.00016401319579886065,
         "entityLabel": "🏦 Binance: Hot Wallet [0xe2fc31]",
         "exchange": "binance",
@@ -3708,14 +3708,14 @@
         "txHash": "0x5ee41fcec9693beead8060d4872746495c33133aa93a9a5fc677bff62f3479a8",
         "txAt": "2026-07-21T03:54:32Z",
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x598a547f0945b43c0f9e2aeca3745c3b583dff9a",
         "label": "Token Millionaire",
         "supply": 823651.048113545,
         "kind": "human",
-        "share": 0.0032579565780724105,
+        "share": 0.0037747446992014893,
         "topShare": 0.0001560420956855242,
         "entityLabel": null,
         "exchange": null,
@@ -3725,14 +3725,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x3ddd089f51a5471ae7c17b9f519146a4f7bde1ad",
         "label": "Token Millionaire",
         "supply": 795577.2473002599,
         "kind": "human",
-        "share": 0.0031469104933978136,
+        "share": 0.0036460841079849794,
         "topShare": 0.00015072346624554918,
         "entityLabel": null,
         "exchange": null,
@@ -3742,14 +3742,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xbc4811f78dcb2ac60c026e871f697d87fc36022b",
         "label": "Token Millionaire",
         "supply": 723656.2315109,
         "kind": "human",
-        "share": 0.0028624264913082627,
+        "share": 0.0033164742887127683,
         "topShare": 0.00013709790715313086,
         "entityLabel": null,
         "exchange": null,
@@ -3759,14 +3759,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x207eaea76fdfeb9e1f46bbb9d19353f62f7e5e4b",
         "label": "Token Millionaire",
         "supply": 630234.1554815305,
         "kind": "human",
-        "share": 0.002492894918642666,
+        "share": 0.002888326364797728,
         "topShare": 0.00011939893553122433,
         "entityLabel": null,
         "exchange": null,
@@ -3776,14 +3776,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x9f857b00e5c17560940b3f0fe356e583eed95988",
         "label": "Token Millionaire",
         "supply": 627045.5441125195,
         "kind": "human",
-        "share": 0.0024802823475685697,
+        "share": 0.002873713144926819,
         "topShare": 0.00011879484766963933,
         "entityLabel": null,
         "exchange": null,
@@ -3793,14 +3793,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x8a742e1a927d89aa4da3359525ddc5a9008de867",
         "label": "Token Millionaire",
         "supply": 589964.3368072341,
         "kind": "human",
-        "share": 0.002333607413396123,
+        "share": 0.0027037721352769152,
         "topShare": 0.00011176974970889656,
         "entityLabel": null,
         "exchange": null,
@@ -3810,14 +3810,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x0c59dd3892c28927bacecd51b69e008d9a81b4df",
         "label": "Token Millionaire",
         "supply": 574452.9406465646,
         "kind": "human",
-        "share": 0.002272251994408331,
+        "share": 0.002632684311654514,
         "topShare": 0.0001088310892537646,
         "entityLabel": null,
         "exchange": null,
@@ -3827,14 +3827,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x86f8e8df6fc52d40d8b9540e5387cf40dc79774e",
         "label": "Token Millionaire",
         "supply": 534417.5637573327,
         "kind": "human",
-        "share": 0.0021138918250251677,
+        "share": 0.002449204515156606,
         "topShare": 0.00010124631882742464,
         "entityLabel": null,
         "exchange": null,
@@ -3844,14 +3844,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x88b2146d7f3b75feed9100acdc55321307aa0f38",
         "label": null,
         "supply": 516825.6383089844,
         "kind": "human",
-        "share": 0.0020443068601706037,
+        "share": 0.0023685817471931683,
         "topShare": 0.00009791349855069337,
         "entityLabel": null,
         "exchange": null,
@@ -3861,14 +3861,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x3c8a1a292d499ac1574c2c7f83ea81835597aafd",
         "label": "Token Millionaire",
         "supply": 502363.0940011011,
         "kind": "human",
-        "share": 0.001987100180871828,
+        "share": 0.0023023007504188848,
         "topShare": 0.0000951735448677403,
         "entityLabel": null,
         "exchange": null,
@@ -3878,14 +3878,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x776fcd96b8f671a40b339341d85ef9c4035a3045",
         "label": "Token Millionaire",
         "supply": 502285.22978,
         "kind": "human",
-        "share": 0.0019867921884860794,
+        "share": 0.0023019439032364135,
         "topShare": 0.00009515879335826628,
         "entityLabel": null,
         "exchange": null,
@@ -3895,14 +3895,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x318bddbf067e25a80d59fbe929dbc1c954921904",
         "label": "Token Millionaire",
         "supply": 498233.25708920346,
         "kind": "human",
-        "share": 0.0019707645866122205,
+        "share": 0.0022833739487988823,
         "topShare": 0.00009439114022192833,
         "entityLabel": null,
         "exchange": null,
@@ -3912,14 +3912,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xb650745b3aaeed5c455f1e3e62a1ca82058ec425",
         "label": "Token Millionaire",
         "supply": 467382.67908755667,
         "kind": "human",
-        "share": 0.001848734943393767,
+        "share": 0.002141987549733723,
         "topShare": 0.00008854644560821728,
         "entityLabel": null,
         "exchange": null,
@@ -3929,14 +3929,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x1dc5d01df1faed99a39e98606b0f853773eaa782",
         "label": null,
         "supply": 458821.8368495423,
         "kind": "human",
-        "share": 0.0018148724814360496,
+        "share": 0.0021027537092224314,
         "topShare": 0.00008692457944691937,
         "entityLabel": null,
         "exchange": null,
@@ -3946,14 +3946,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xe4d3df079fbef6529c893ee4e9298711d480ff35",
         "label": "inthecrowd.eth",
         "supply": 446810.8911242243,
         "kind": "human",
-        "share": 0.0017673631147882504,
+        "share": 0.00204770824571834,
         "topShare": 0.00008464908529628807,
         "entityLabel": null,
         "exchange": null,
@@ -3963,14 +3963,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0xcf9bfcc3abc06cee5c4675bf1894b9e01a110c6a",
         "label": "Token Millionaire",
         "supply": 444168.8125407416,
         "kind": "human",
-        "share": 0.0017569123573703408,
+        "share": 0.002035599753717125,
         "topShare": 0.00008414853900295579,
         "entityLabel": null,
         "exchange": null,
@@ -3980,14 +3980,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x4199cc1f5ed0d796563d7ccb2e036253e2c18281",
         "label": "aBnbCAKE",
         "supply": 443592.4821803854,
         "kind": "human",
-        "share": 0.0017546326792311994,
+        "share": 0.0020329584653004757,
         "topShare": 0.00008403935223333636,
         "entityLabel": "​​🤖 🏦 Bitget: DEX Aggregator [0xbc1d97]",
         "exchange": "bitget",
@@ -3997,14 +3997,14 @@
         "txHash": "0x7afe8226a03f7d04988207850dbf29e71ad0e4efa883b2a08949b52c99c52720",
         "txAt": "2026-04-17T14:31:43Z",
         "calls": 3,
-        "credits": 3
+        "credits": 0
       },
       {
         "address": "0x518d9643160cfd6fe469bfbd3ba66fc8035a68a3",
         "label": "Token Millionaire",
         "supply": 439024.78845435346,
         "kind": "human",
-        "share": 0.0017365651397611417,
+        "share": 0.0020120249914471915,
         "topShare": 0.00008317399486738376,
         "entityLabel": "🏦 Binance: Deposit [0x5ebc62]",
         "exchange": "binance",
@@ -4014,14 +4014,14 @@
         "txHash": "0x9ee063ef5977dfc5cd0ea202385e115a8e3128744a682eda062ea848656f4bab",
         "txAt": "2026-09-13T13:59:48Z",
         "calls": 3,
-        "credits": 3
+        "credits": 0
       },
       {
         "address": "0x63d5862949a37907fe75d6be2c9b78146e090cc1",
         "label": "Token Millionaire",
         "supply": 414000.29592401197,
         "kind": "human",
-        "share": 0.0016375806119821998,
+        "share": 0.0018973392021855093,
         "topShare": 0.00007843306208177657,
         "entityLabel": null,
         "exchange": null,
@@ -4031,14 +4031,14 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x1a9718a61847ceee4b25cff80591f712a11fe638",
         "label": "High Balance",
         "supply": 394078.14542945387,
         "kind": "human",
-        "share": 0.001558778428215481,
+        "share": 0.0018060371487876963,
         "topShare": 0.00007465877669617149,
         "entityLabel": null,
         "exchange": null,
@@ -4048,7 +4048,7 @@
         "txHash": null,
         "txAt": null,
         "calls": 2,
-        "credits": 2
+        "credits": 0
       },
       {
         "address": "0x009cf7bc57584b7998236eff51b98a168dcea9b0",
@@ -4068,13 +4068,13 @@
         "credits": 0
       }
     ],
-    "analysedSupply": 252812162.58593082,
+    "analysedSupply": 218200464.86528757,
     "countries": [
       {
         "code": "KR",
         "name": "South Korea",
         "supply": 1125826.376741798,
-        "share": 0.004453212872458735,
+        "share": 0.005159596600478646,
         "wallets": 1,
         "exchanges": [
           "bithumb"
@@ -4084,7 +4084,7 @@
         "code": "NL",
         "name": "Netherlands",
         "supply": 903148.0106647965,
-        "share": 0.00357240728225572,
+        "share": 0.004139074640479713,
         "wallets": 1,
         "exchanges": [
           "bitvavo"
@@ -4092,7 +4092,7 @@
       }
     ],
     "global": {
-      "share": 0.525857705517675,
+      "share": 0.6092710381092696,
       "supply": 132943223.74439898,
       "wallets": 9,
       "exchanges": [
@@ -4103,19 +4103,13 @@
       ]
     },
     "otherEntity": {
-      "share": 0.13690677444713015,
-      "supply": 34611697.72064323,
-      "wallets": 5,
-      "exchanges": [
-        "🤖 🏦 PancakeSwap: CAKE Bridge [0xb27420]",
-        "🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542]",
-        "🤖 🏦 PancakeSwap: CAKE-BNB v2 Liquidity Pool [0x0ed7e5]",
-        "🤖 🏦 PancakeSwap: CAKE-USDT Liquidity Pool [0x7f51c8]",
-        "🤖 🏦 PancakeSwap: veCAKE Token [0x5692db]"
-      ]
+      "share": 0,
+      "supply": 0,
+      "wallets": 0,
+      "exchanges": []
     },
     "untraced": {
-      "share": 0.32920989988048005,
+      "share": 0.3814302906497717,
       "supply": 83228266.73348193,
       "wallets": 35,
       "exchanges": []
@@ -4132,9 +4126,9 @@
       "wallets": 0,
       "exchanges": []
     },
-    "attributable": 0.008025620154714455,
-    "attributableByWallets": 0.0392156862745098,
-    "custodyShare": 0.7894445670778366,
+    "attributable": 0.009298671240958359,
+    "attributableByWallets": 0.043478260869565216,
+    "custodyShare": 0.7560455502506253,
     "calls": [
       {
         "endpoint": "search/general",
@@ -8434,9 +8428,7 @@
     "credits": 121,
     "ms": 142172,
     "asOf": "2026-09-18T11:30:39.284Z",
-    "hash": "bf940cc96643",
-    "warnings": [
-      "entities not in exchanges.json (counted as unattributed): 🤖 🏦 PancakeSwap: CAKE Staking Pool [0x45c542], 🤖 🏦 PancakeSwap: CAKE Bridge [0xb27420], 🤖 🏦 PancakeSwap: veCAKE Token [0x5692db], 🤖 🏦 PancakeSwap: CAKE-BNB v2 Liquidity Pool [0x0ed7e5], 🤖 🏦 PancakeSwap: CAKE-USDT Liquidity Pool [0x7f51c8]"
-    ]
+    "hash": "19b67984bc05",
+    "warnings": []
   }
 }

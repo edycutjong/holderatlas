@@ -92,4 +92,16 @@ export function isStructural(address: string, label: string | null | undefined):
   return !!label && STRUCTURAL_TAG.test(label);
 }
 
+/**
+ * Nansen puts 🏦 on DEX pools, staking contracts and bridges too ("🤖 🏦 Uniswap: PoolManager V4", "🤖 🏦 PancakeSwap: CAKE
+ * Staking Pool" — DX-REPORT friction 7). A 🏦 label that names no exchange in the table AND reads as a pool/contract is not
+ * an exchange trace at all; the caller treats such a transfer as "no exchange trace" instead of "entity not in the table".
+ * A table exchange always wins ("🏦 Binance: Bridge" is still Binance).
+ */
+export function isDexOrContractEntity(label: string | null | undefined): boolean {
+  if (!label || !label.includes(EXCHANGE_MARK)) return false;
+  if (exchangeOf(entityKey(label))) return false;
+  return STRUCTURAL_TAG.test(label);
+}
+
 export const EXCHANGE_TABLE_SIZE = Object.keys(EXCHANGES).length;
