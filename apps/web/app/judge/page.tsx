@@ -104,6 +104,14 @@ export default function Judge() {
               </td>
             </tr>
             <tr>
+              <th>Calls verifiable from the clone</th>
+              <td>
+                <b>2,065 live Nansen calls</b> whose responses or hashes are in the repo: 1,070 in <code>fixtures/</code> (12 runs, every raw response, 1,139
+                credits) + 885 in <a href={`${REPO}/blob/main/docs/BENCH.md`}>docs/BENCH.md</a> + 110 in <a href={`${REPO}/blob/main/DEMO.md`}>DEMO.md</a>; the
+                account-wide total is on Nansen&rsquo;s usage dashboard
+              </td>
+            </tr>
+            <tr>
               <th>Determinism</th>
               <td>12 recorded atlases replay offline with the same hash, zero network, zero credits — including a recorded timeout, replayed as a timeout</td>
             </tr>

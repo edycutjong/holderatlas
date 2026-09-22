@@ -7,7 +7,7 @@
 
 <img src="docs/assets/readme-hero-animated.svg" alt="Holder Atlas — a world map fills country by country as Nansen exchange labels land; the attributable % counts up beside it, global exchanges stay grey" width="100%">
 
-<p>One world map of the countries a token's holders reach exchanges from — read from Nansen's exchange entity labels, joined to a curated exchange→country table shipped in this repo — with the number that keeps it honest printed as large as the map: <b>the share of analysed supply the map can actually place</b>. Global exchanges are never placed. Grey is never hidden.</p>
+<p>"So where are our holders — Korea or the US?" Every token founder gets the question and has nothing but 40-character strings. Holder Atlas is one world map of the countries a token's holders reach exchanges from — read from Nansen's exchange entity labels, joined to a curated exchange→country table shipped in this repo — with the number that keeps it honest printed as large as the map: <b>the share of analysed supply the map can actually place</b>. Global exchanges are never placed. Grey is never hidden.</p>
 
 <br/>
 
@@ -42,6 +42,8 @@
 | `WLFI` · ethereum | Upbit's internal wallet holds half the analysed supply | **55.2 %** placed: KR 52 · US 3 |
 | `DEGEN` · base | Coinbase custody + Coinbase withdrawals | **58.1 %** placed: US 54 · GB 2 · NL 1 |
 | `MEW` · solana | exchanges visible but Nansen cannot name them on Solana | **0 %** — a hatched "unnamed 90 %" bar and a banner that says which field is missing |
+
+**Try it now:** https://holderatlas.edycu.dev/?q=PEPE&chain=ethereum — cold ≈ 40–60 s while the rail streams every call, ≈ 0 s once cached; the same click path is written out in [JUDGE.md](JUDGE.md).
 
 Every map ships with a **live call rail** on the right — each Nansen call appears as it is made (endpoint · credits · ms · response hash), turning from pending to green — and a **provenance drawer**: every Nansen call, its body, credits, latency, cached or live, the fields used, and the atlas hash. The CLI prints the same with `--explain`. **Save PNG** renders the poster (1600×900) in the browser; the permalink `/t/<chain>/<address>` re-renders it and serves it as the link preview.
 
@@ -113,7 +115,7 @@ The engine, not decoration — every placement on the map is a Nansen response f
 | `transaction-with-token-transfer-lookup` | 1 × traced wallet | `token_transfer_array[].from/to_address_label` | **the exchange entity** → country / global |
 | `profiler/address/related-wallets` | 1 × ≤ 5 | `relation` (`Deployed by`) | an unlabelled mega-holder is a contract → excluded |
 
-~118 credits per cold map, 0 on a cache hit. Cached calls are labelled and never counted; failed calls are shown as "lookup failed", never guessed. **Every call is visible while it happens:** the page's right-hand rail streams each Nansen request as a row — pending → live (green) · cached (grey) · error (red) — with `POST endpoint`, the chain and wallet filter, the credits, the latency and the response sha256, and its counters equal the provenance drawer's totals exactly (same `Call` objects, nothing synthetic).
+~118 credits per cold map, 0 on a cache hit. **Live Nansen calls you can verify from the clone:** 1,070 in `fixtures/` (12 runs recorded 2026-09-18, every raw response byte-for-byte, 1,139 credits) + 885 across the two runs in [docs/BENCH.md](docs/BENCH.md) + 110 in [DEMO.md](DEMO.md) — 2,065 calls whose responses or hashes are in this repo. The account-wide total is on Nansen's usage dashboard, where the 1,000-call gate is checked. Cached calls are labelled and never counted; failed calls are shown as "lookup failed", never guessed. **Every call is visible while it happens:** the page's right-hand rail streams each Nansen request as a row — pending → live (green) · cached (grey) · error (red) — with `POST endpoint`, the chain and wallet filter, the credits, the latency and the response sha256, and its counters equal the provenance drawer's totals exactly (same `Call` objects, nothing synthetic).
 
 ### Why only Nansen
 
@@ -128,7 +130,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 | Tests | **220 tests** (`npm test`) — every label string seen live pinned to its key; the timeout path; offline replay = same hash — **100% statements/branches/functions/lines** on `packages/core/src` (enforced: `vitest.config.ts` thresholds) | `packages/core/test/` |
 | Property-based verification | **24,000 generated cases** (fast-check) = **14,000 property cases** — shares partition the supply, global never attributed, structural never in the denominator, hash purity, label normaliser, every table key resolves (7 × 2,000) — + **10,000 generated malformed queries** → 400 with zero fetches | `property.test.ts`, `boundary.test.ts` |
 | Permission boundary | the server key never reaches a client (atlas, events, provenance, cache keys, errors) | `boundary.test.ts`, [SECURITY.md](.github/SECURITY.md) |
-| Spend guard | only the page's own fetch (run marker) may go live — a bare GET of `/api/atlas` (crawlers, unfurlers, `curl`) gets the labelled fixture replay or a 202, never a Nansen call · 4 cold maps / IP / min · 3,000 live credits / day; past the ceiling a recorded fixture replays at 0 credits, labelled, or an honest 503 | `apps/web/lib/guard.ts`, `guard.test.ts` |
+| Spend guard | only the page's own fetch (run marker) may go live — a bare GET of `/api/atlas` (crawlers, unfurlers, `curl`) gets the labelled fixture replay or a 202, never a Nansen call · 4 cold maps / IP / min · 3,000 live credits / day; past the ceiling every token with a recorded run (all 12, including the whole judge path: PEPE, WLFI, DEGEN, MOG, MEW) replays at 0 credits, labelled; only an unrecorded token gets a 503, and the page shows its message — which names the tokens that replay — instead of crashing | `apps/web/lib/guard.ts`, `guard.test.ts` |
 | Fixtures | 12/12 atlases reproduced offline, zero network, zero credits — including a recorded timeout replayed as a timeout | `npm run verify`, `fixtures/*.json` |
 | Cold latency | p50 **40.3 s** · p95 **59.0 s** (4 tokens, live, 4-wide pool under 5 rps) — an 8-wide pool under 10 rps was measured 2026-09-22 and rejected: p50 34.5 s, p95 58.1 s, 3 failed calls in 441 (Nansen's per-call latency is the ceiling, not the pool) | [docs/BENCH.md](docs/BENCH.md) |
 | Warm latency | p50 **7 ms** | [docs/BENCH.md](docs/BENCH.md) |
@@ -156,7 +158,7 @@ An RPC shows transfers between hex strings; the map needs *who the counterparty 
 ### Prerequisites
 
 - Node 22 (20+ works)
-- A Nansen API key from [app.nansen.ai/api](https://app.nansen.ai/api) — the only configuration
+- A Nansen API key from [app.nansen.ai/api](https://app.nansen.ai/api) — free to create, the only configuration. The 10-minute clock below starts after the key exists; `npm run verify` and `npm run dev` on a replayed token need no key at all.
 
 ### Installation
 
@@ -207,6 +209,7 @@ fixtures          12 recorded atlases · docs/  SCORING · BENCH · DX-REPORT ·
 
 - [DEMO.md](DEMO.md) — real CLI output, the honest states, the benchmark
 - [JUDGE.md](JUDGE.md) — the 30-second path, receipts, reproduce, limitations (mirrors [/judge](https://holderatlas.edycu.dev/judge))
+- Write-up: [Twice the workers, 14% faster, three broken calls](https://dev.to/edycutjong/twice-the-workers-14-faster-three-broken-calls-what-a-110-call-map-taught-me-about-api-latency-596g) — the concurrency experiment in docs/BENCH.md, and why 🏦 is not always an exchange
 - Live: https://holderatlas.edycu.dev · `/?q=PEPE&chain=ethereum` runs the hero query on load (fallback alias: https://holderatlas-edycutjong.vercel.app)
 
 ## 📄 License
