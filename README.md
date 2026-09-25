@@ -40,7 +40,7 @@
 | Token in | Wallets stream in, each gains its exchange | The picture |
 |---|---|---|
 | `PEPE` · ethereum | 100 holders → 12 exchange-custody + 40 people examined; 🏦 Coinbase, 🏦 Upbit, 🏦 Binance… land one by one | **40.4 %** placed: US 24 · KR 10 · GB 3 · TR 3 · NL 0.3 — and **47 % on global exchanges, grey** (live, 2026-09-18) |
-| `WLFI` · ethereum | Upbit's internal wallet holds half the analysed supply | **55.2 %** placed: KR 52 · US 3 |
+| `WLFI` · ethereum | Upbit's internal wallet held half the analysed supply on 2026-09-18 | **55.2 %** placed: KR 52 · US 3 (2026-09-18, the clip) — **≈ 3 % live now**: that wallet's newest exchange touch became a Blockchain.com deposit, a global exchange (grey) |
 | `DEGEN` · base | Coinbase custody + Coinbase withdrawals | **58.1 %** placed: US 54 · GB 2 · NL 1 |
 | `MEW` · solana | exchanges visible but Nansen cannot name them on Solana | **0 %** — a hatched "unnamed 90 %" bar and a banner that says which field is missing |
 

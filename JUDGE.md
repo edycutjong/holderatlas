@@ -14,7 +14,9 @@ one number that keeps the picture honest — as large as the map. Global exchang
    US 24 · KR 10 · GB 3 · TR 3 · NL 0.3, with 47 % on global exchanges in grey. Cold ≈ 40–60 s, cached ≈ 0 s. On the right,
    the **Nansen call rail** shows every request as it is made — `POST tgm/transfers`, credits, ms, response hash — each row
    turning from pending to green; its counters equal the drawer's totals.
-2. Click **WLFI** — the Korean contrast: Upbit holds half the analysed supply → **55 %**, KR 52. Then **DEGEN · base**: Coinbase → US 54.
+2. Click **DEGEN · base** — the contrast: Coinbase custody → **58 %**, US 54. Then **WLFI** — holders move: on 2026-09-18 Upbit's
+   internal wallet held half the analysed supply (**55 %**, KR 52, the run in the clip); a live run now reads **≈ 3 %**, because that
+   wallet's newest exchange touch is a Blockchain.com deposit — a global exchange, so it lands in grey, not on a country.
 3. Click **Every Nansen call** — endpoint, body, credits, latency, cached or live, the fields used, the atlas hash. Click
    **Save PNG** — the poster, 1600×900, rendered in the browser.
 4. Click **MEW · solana** — the honest unsupported state: exchanges visible, unnamed, 0 % placed, and the banner says which
