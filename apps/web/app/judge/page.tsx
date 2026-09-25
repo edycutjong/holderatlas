@@ -42,7 +42,9 @@ export default function Judge() {
             turning from pending to green; its counters equal the drawer&rsquo;s totals.
           </li>
           <li>
-            Click <b>WLFI</b> — the Korean contrast: Upbit holds half the analysed supply → <b>55 %</b>, KR 52. Then <b>DEGEN · base</b>: Coinbase → US 54.
+            Click <b>DEGEN · base</b> — the contrast: Coinbase custody → <b>58 %</b>, US 54. Then <b>WLFI</b> — holders move: on 2026-09-18 Upbit&apos;s
+            internal wallet held half the analysed supply (<b>55 %</b>, KR 52, the run in the clip); a live run now reads <b>≈ 3 %</b>, because that
+            wallet&apos;s newest exchange touch is a Blockchain.com deposit — a global exchange, so it lands in grey, not on a country.
           </li>
           <li>
             Click <b>Every Nansen call</b> — endpoint, body, credits, latency, cached or live, the fields used, the atlas hash. Click <b>Save PNG</b> — the
